@@ -1082,6 +1082,114 @@ body{
     font-size:17px;
 }
 
+/* COCA-COLA WERBUNG */
+
+.coke-ad-banner{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:8000;
+    background:linear-gradient(
+        90deg,
+        #cc0000,
+        #e8000a,
+        #cc0000
+    );
+    background-size:200% 100%;
+    animation:cokeShine 4s ease infinite;
+    box-shadow:0 -4px 30px rgba(200,0,0,.5);
+    border-top:3px solid rgba(255,255,255,.2);
+}
+
+@keyframes cokeShine{
+    0%{ background-position:0% 0%; }
+    50%{ background-position:100% 0%; }
+    100%{ background-position:0% 0%; }
+}
+
+.coke-ad-inner{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:10px 30px;
+    max-width:1200px;
+    margin:0 auto;
+    position:relative;
+}
+
+.coke-logo-wrap{
+    flex-shrink:0;
+}
+
+.coke-logo-svg{
+    width:160px;
+    height:50px;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.3));
+}
+
+.coke-divider{
+    width:2px;
+    height:40px;
+    background:rgba(255,255,255,.3);
+    border-radius:2px;
+    flex-shrink:0;
+}
+
+.coke-text-block{
+    flex:1;
+}
+
+.coke-slogan{
+    font-size:18px;
+    font-weight:bold;
+    color:white;
+    font-style:italic;
+    text-shadow:0 1px 4px rgba(0,0,0,.3);
+    letter-spacing:1px;
+}
+
+.coke-sub{
+    font-size:12px;
+    color:rgba(255,255,255,.75);
+    margin-top:2px;
+}
+
+.coke-bottle{
+    flex-shrink:0;
+    filter:drop-shadow(0 2px 8px rgba(0,0,0,.3));
+    animation:bottleBob 2s ease-in-out infinite;
+}
+
+@keyframes bottleBob{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-4px); }
+}
+
+.coke-close{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    background:rgba(0,0,0,.2);
+    border:none;
+    color:rgba(255,255,255,.6);
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:.2s;
+}
+
+.coke-close:hover{
+    background:rgba(0,0,0,.4);
+    color:white;
+}
+
 /* BENACHRICHTIGUNGEN */
 
 .notif-wrapper{
