@@ -946,38 +946,58 @@
 
 <!-- COCA-COLA WERBUNG -->
 
-<div class="coke-ad-banner">
+<div class="coke-ad-banner" id="cokeAd">
+
+    <!-- Hintergrund-Welle -->
+    <div class="coke-wave"></div>
+
+    <!-- Bubbles -->
+    <div class="coke-bubbles">
+        <span class="bubble b1"></span>
+        <span class="bubble b2"></span>
+        <span class="bubble b3"></span>
+        <span class="bubble b4"></span>
+        <span class="bubble b5"></span>
+        <span class="bubble b6"></span>
+    </div>
+
     <div class="coke-ad-inner">
 
-        <div class="coke-logo-wrap">
-            <svg class="coke-logo-svg" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
-                <text x="50%" y="48" dominant-baseline="middle" text-anchor="middle"
-                font-family="Georgia, serif" font-size="42" font-style="italic"
-                font-weight="bold" fill="white"
-                style="text-shadow:2px 2px 4px rgba(0,0,0,.3)">
-                Coca-Cola
-                </text>
-            </svg>
+        <!-- Dose -->
+        <div class="coke-can">
+            <div class="coke-can-top"></div>
+            <div class="coke-can-body">
+                <div class="coke-can-label">
+                    <div class="coke-can-logo">Coca-Cola</div>
+                    <div class="coke-can-wave-line"></div>
+                </div>
+            </div>
+            <div class="coke-can-bottom"></div>
+            <div class="coke-can-shine"></div>
         </div>
 
-        <div class="coke-divider"></div>
-
-        <div class="coke-text-block">
-            <div class="coke-slogan">Taste the Feeling.</div>
-            <div class="coke-sub">Das offizielle Getränk deines Ultimate Teams ⚽</div>
+        <!-- Text -->
+        <div class="coke-content">
+            <div class="coke-logo-text">Coca-Cola</div>
+            <div class="coke-tagline">Taste the Feeling.</div>
+            <div class="coke-desc">
+                Eiskalt. Frisch. Unvergesslich. — Das perfekte Getränk für dein Ultimate Team.
+            </div>
+            <div class="coke-badge">⚽ Offizieller Sponsor</div>
         </div>
 
-        <div class="coke-bottle">
-            <svg viewBox="0 0 60 120" width="40" fill="white" opacity="0.9">
-                <path d="M22 0 h16 l4 10 h4 a4 4 0 0 1 4 4 v8 a4 4 0 0 1-4 4
-                         l2 6 v70 a6 6 0 0 1-6 6 H18 a6 6 0 0 1-6-6 V32
-                         l2-6 a4 4 0 0 1-4-4 v-8 a4 4 0 0 1 4-4 h4 Z"/>
-            </svg>
+        <!-- Eis-Effekt rechts -->
+        <div class="coke-ice-block">
+            <div class="coke-ice i1"></div>
+            <div class="coke-ice i2"></div>
+            <div class="coke-ice i3"></div>
         </div>
-
-        <button class="coke-close" onclick="this.closest('.coke-ad-banner').style.display='none'">✕</button>
 
     </div>
+
+    <button class="coke-close"
+    onclick="document.getElementById('cokeAd').style.display='none'">✕</button>
+
 </div>
 
 </body>
