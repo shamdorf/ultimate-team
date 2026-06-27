@@ -1,0 +1,549 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Team V2</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    min-height:100vh;
+    color:white;
+
+    background:linear-gradient(
+        135deg,
+        #050816,
+        #0d1b3d,
+        #051b4d
+    );
+
+    background-size:400% 400%;
+    animation:bgMove 12s ease infinite;
+}
+
+@keyframes bgMove{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+}
+
+.page{
+    display:none;
+    min-height:100vh;
+    padding:30px;
+}
+
+.active{
+    display:block;
+}
+
+.title{
+    text-align:center;
+    font-size:70px;
+    margin-top:30px;
+    text-shadow:
+    0 0 20px #00d4ff,
+    0 0 40px #00d4ff;
+}
+
+.coins{
+    width:320px;
+    margin:20px auto;
+    padding:15px;
+    border-radius:15px;
+
+    text-align:center;
+    font-size:28px;
+
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(10px);
+
+    box-shadow:0 0 20px rgba(0,212,255,.5);
+}
+
+.menu{
+    text-align:center;
+    margin-top:50px;
+}
+
+.menu-btn{
+    width:320px;
+    padding:20px;
+    margin:15px;
+
+    font-size:24px;
+    font-weight:bold;
+
+    border:none;
+    border-radius:18px;
+
+    cursor:pointer;
+    color:white;
+
+    background:
+    linear-gradient(
+        135deg,
+        #0066ff,
+        #00cfff
+    );
+
+    transition:.3s;
+
+    box-shadow:
+    0 10px 30px rgba(0,150,255,.5);
+}
+
+.menu-btn:hover{
+    transform:
+    translateY(-5px)
+    scale(1.05);
+}
+
+.back-btn{
+    padding:12px 25px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+#pack{
+    width:260px;
+    height:360px;
+
+    margin:40px auto;
+
+    border-radius:25px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:38px;
+    font-weight:bold;
+
+    background:
+    linear-gradient(
+        180deg,
+        #001970,
+        #004cff,
+        #00d4ff
+    );
+
+    box-shadow:
+    0 0 40px #00aaff;
+}
+
+.opening{
+    animation:shake .12s infinite;
+}
+
+@keyframes shake{
+    0%{transform:translateX(-5px);}
+    50%{transform:translateX(5px);}
+    100%{transform:translateX(-5px);}
+}
+
+.player-card,
+.club-card{
+
+    width:220px;
+    height:300px;
+
+    border-radius:25px;
+
+    text-align:center;
+
+    padding-top:20px;
+
+    transition:.3s;
+}
+
+.player-card{
+    margin:40px auto;
+}
+
+.club-card:hover{
+    transform:
+    translateY(-5px)
+    scale(1.04);
+}
+
+.rating{
+    font-size:55px;
+    font-weight:bold;
+}
+
+.player-name{
+    margin-top:90px;
+    font-size:24px;
+    font-weight:bold;
+}
+
+.rarity{
+    margin-top:10px;
+}
+
+#clubContainer{
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+    justify-content:center;
+}
+
+/* Seltenheiten */
+
+.bronze{
+    background:linear-gradient(#b07d4f,#6d4324);
+}
+
+.silver{
+    background:linear-gradient(#ffffff,#9e9e9e);
+    color:black;
+}
+
+.gold{
+    background:linear-gradient(#ffe082,#d4a100);
+    color:black;
+}
+
+.tots{
+    background:linear-gradient(#6200ff,#ff4dff);
+    box-shadow:0 0 30px #ff4dff;
+}
+
+.toty{
+    background:linear-gradient(#001970,#004cff,#00d4ff);
+    box-shadow:0 0 40px #00d4ff;
+}
+
+.sell-btn{
+    margin-top:15px;
+    padding:8px 15px;
+
+    border:none;
+    border-radius:10px;
+
+    background:#00c853;
+    color:white;
+
+    cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HOME -->
+
+<div id="home" class="page active">
+
+    <div class="title">
+        ULTIMATE TEAM
+    </div>
+
+    <div id="coinsDisplay" class="coins"></div>
+
+    <div class="menu">
+
+        <button
+        class="menu-btn"
+        onclick="openPage('packs')">
+        📦 Packs öffnen
+        </button>
+
+        <br>
+
+        <button
+        class="menu-btn"
+        onclick="openPage('clubPage');loadClub();">
+        👥 Mein Verein
+        </button>
+
+    </div>
+
+</div>
+
+<!-- PACKS -->
+
+<div id="packs" class="page">
+
+    <button
+    class="back-btn"
+    onclick="openPage('home')">
+    ← Zurück
+    </button>
+
+    <h1>Packs</h1>
+
+    <div id="coinsDisplayPack" class="coins"></div>
+
+    <div style="text-align:center;">
+
+        <button
+        class="menu-btn"
+        onclick="openPack()">
+        Pack öffnen (5.000 Coins)
+        </button>
+
+    </div>
+
+    <div id="result">
+        <div id="pack">PACK</div>
+    </div>
+
+</div>
+
+<!-- CLUB -->
+
+<div id="clubPage" class="page">
+
+    <button
+    class="back-btn"
+    onclick="openPage('home')">
+    ← Zurück
+    </button>
+
+    <h1>Mein Verein</h1>
+
+    <div id="clubContainer"></div>
+
+</div>
+
+<script>
+
+let coins =
+parseInt(localStorage.getItem("coins"))
+|| 100000;
+
+let club =
+JSON.parse(localStorage.getItem("club"))
+|| [];
+
+const players = [
+
+{name:"Bronze Talent",rating:65,rarity:"bronze"},
+{name:"Junger Spieler",rating:68,rarity:"bronze"},
+
+{name:"Palmer",rating:80,rarity:"silver"},
+{name:"Gavi",rating:82,rarity:"silver"},
+
+{name:"Salah",rating:89,rarity:"gold"},
+{name:"Wirtz",rating:91,rarity:"gold"},
+
+{name:"Musiala TOTS",rating:96,rarity:"tots"},
+
+{name:"Mbappé TOTY",rating:99,rarity:"toty"}
+
+];
+
+function openPage(page){
+
+document
+.querySelectorAll(".page")
+.forEach(p=>p.classList.remove("active"));
+
+document
+.getElementById(page)
+.classList.add("active");
+
+updateCoins();
+}
+
+function updateCoins(){
+
+document.getElementById(
+"coinsDisplay"
+).innerHTML =
+"🪙 Coins: " +
+coins.toLocaleString("de-DE");
+
+document.getElementById(
+"coinsDisplayPack"
+).innerHTML =
+"🪙 Coins: " +
+coins.toLocaleString("de-DE");
+
+localStorage.setItem(
+"coins",
+coins
+);
+}
+
+function getSellPrice(rating){
+return rating * 100;
+}
+
+function getRarity(){
+
+const r =
+Math.random()*100;
+
+if(r < 50) return "bronze";
+if(r < 80) return "silver";
+if(r < 95) return "gold";
+if(r < 99) return "tots";
+
+return "toty";
+}
+
+function openPack(){
+
+if(coins < 5000){
+
+alert(
+"Nicht genügend Coins!"
+);
+
+return;
+}
+
+coins -= 5000;
+
+updateCoins();
+
+document.getElementById(
+"result"
+).innerHTML =
+'<div id="pack" class="opening">PACK</div>';
+
+setTimeout(()=>{
+
+const rarity =
+getRarity();
+
+const pool =
+players.filter(
+p=>p.rarity===rarity
+);
+
+const player =
+pool[
+Math.floor(
+Math.random()*pool.length
+)
+];
+
+club.push(player);
+
+localStorage.setItem(
+"club",
+JSON.stringify(club)
+);
+
+document.getElementById(
+"result"
+).innerHTML = `
+
+<div class="player-card ${player.rarity}">
+
+<div class="rating">
+${player.rating}
+</div>
+
+<div class="player-name">
+${player.name}
+</div>
+
+<div class="rarity">
+${player.rarity.toUpperCase()}
+</div>
+
+</div>
+
+`;
+
+},2000);
+}
+
+function loadClub(){
+
+const container =
+document.getElementById(
+"clubContainer"
+);
+
+container.innerHTML = "";
+
+if(club.length === 0){
+
+container.innerHTML =
+"<h2>Noch keine Spieler gezogen.</h2>";
+
+return;
+}
+
+club.forEach((player,index)=>{
+
+container.innerHTML += `
+
+<div class="club-card ${player.rarity}">
+
+<div class="rating">
+${player.rating}
+</div>
+
+<div class="player-name">
+${player.name}
+</div>
+
+<div>
+💰 ${getSellPrice(player.rating)}
+</div>
+
+<button
+class="sell-btn"
+onclick="sellPlayer(${index})">
+Verkaufen
+</button>
+
+</div>
+
+`;
+
+});
+}
+
+function sellPlayer(index){
+
+const player =
+club[index];
+
+coins +=
+getSellPrice(
+player.rating
+);
+
+club.splice(index,1);
+
+localStorage.setItem(
+"club",
+JSON.stringify(club)
+);
+
+updateCoins();
+
+loadClub();
+}
+
+updateCoins();
+
+</script>
+
+</body>
+</html>
+

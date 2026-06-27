@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Team</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    min-height:100vh;
+
+    background:
+    linear-gradient(
+    135deg,
+    #050816,
+    #0d1b3d,
+    #051b4d
+    );
+
+    background-size:400% 400%;
+
+    animation:bgMove 12s ease infinite;
+
+    color:white;
+}
+
+@keyframes bgMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    50%{
+        background-position:100% 50%;
+    }
+
+    100%{
+        background-position:0% 50%;
+    }
+
+}
+
+/* Seiten */
+
+.page{
+    display:none;
+    min-height:100vh;
+    padding:30px;
+}
+
+.active{
+    display:block;
+}
+
+/* Titel */
+
+.title{
+
+    text-align:center;
+
+    font-size:70px;
+
+    font-weight:900;
+
+    letter-spacing:3px;
+
+    margin-top:40px;
+
+    text-shadow:
+    0 0 20px #00d4ff,
+    0 0 40px #00d4ff;
+}
+
+/* Coins */
+
+.coins{
+
+    width:320px;
+
+    margin:25px auto;
+
+    padding:15px;
+
+    border-radius:15px;
+
+    background:
+    rgba(255,255,255,.08);
+
+    backdrop-filter:blur(10px);
+
+    text-align:center;
+
+    font-size:28px;
+
+    box-shadow:
+    0 0 20px rgba(0,212,255,.5);
+}
+
+/* Menü */
+
+.menu{
+    text-align:center;
+    margin-top:50px;
+}
+
+.menu-btn{
+
+    width:320px;
+
+    padding:20px;
+
+    margin:15px;
+
+    font-size:24px;
+
+    font-weight:bold;
+
+    border:none;
+
+    border-radius:18px;
+
+    cursor:pointer;
+
+    color:white;
+
+    background:
+    linear-gradient(
+    135deg,
+    #0066ff,
+    #00cfff
+    );
+
+    box-shadow:
+    0 10px 30px rgba(0,150,255,.5);
+
+    transition:.3s;
+}
+
+.menu-btn:hover{
+
+    transform:
+    translateY(-5px)
+    scale(1.05);
+
+    box-shadow:
+    0 15px 40px rgba(0,212,255,.8);
+}
+
+/* Zurück */
+
+.back-btn{
+
+    background:
+    linear-gradient(
+    135deg,
+    #222,
+    #444
+    );
+
+    color:white;
+
+    padding:12px 25px;
+
+    border:none;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    box-shadow:
+    0 5px 15px rgba(0,0,0,.5);
+
+    transition:.3s;
+}
+
+.back-btn:hover{
+    transform:scale(1.05);
+}
+
+/* Überschrift */
+
+h1{
+    text-align:center;
+    margin-top:10px;
+}
+
+/* Pack */
+
+#pack{
+
+    width:260px;
+    height:360px;
+
+    margin:40px auto;
+
+    border-radius:25px;
+
+    background:
+    linear-gradient(
+    180deg,
+    #001970,
+    #004cff,
+    #00d4ff
+    );
+
+    box-shadow:
+    0 0 40px #00aaff,
+    0 0 80px rgba(0,170,255,.6);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:38px;
+    font-weight:bold;
+}
+
+/* Gezogene Karte */
+
+.player-card{
+
+    width:260px;
+    height:360px;
+
+    margin:40px auto;
+
+    border-radius:25px;
+
+    background:
+    linear-gradient(
+    180deg,
+    #ffe082,
+    #ffca28,
+    #d4a100
+    );
+
+    color:black;
+
+    text-align:center;
+
+    box-shadow:
+    0 0 35px gold;
+
+    transition:.3s;
+}
+
+.player-card:hover{
+    transform:scale(1.05);
+}
+
+.rating{
+
+    font-size:60px;
+
+    font-weight:900;
+
+    padding-top:20px;
+}
+
+.player-name{
+
+    margin-top:120px;
+
+    font-size:30px;
+
+    font-weight:bold;
+}
+
+/* Verein */
+
+#clubContainer{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    justify-content:center;
+
+    gap:20px;
+
+    margin-top:30px;
+}
+
+.club-card{
+
+    width:200px;
+    height:280px;
+
+    border-radius:25px;
+
+    background:
+    linear-gradient(
+    180deg,
+    #ffe082,
+    #ffca28,
+    #d4a100
+    );
+
+    color:black;
+
+    text-align:center;
+
+    padding-top:20px;
+
+    box-shadow:
+    0 0 25px gold;
+
+    transition:.3s;
+}
+
+.club-card:hover{
+
+    transform:
+    translateY(-8px)
+    scale(1.05);
+}
+
+.club-card .rating{
+    font-size:45px;
+}
+
+.club-card .player-name{
+    margin-top:80px;
+    font-size:24px;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HAUPTMENÜ -->
+
+<div id="home" class="page active">
+
+    <div class="title">
+        ULTIMATE TEAM
+    </div>
+
+    <div id="coinsDisplay" class="coins"></div>
+
+    <div class="menu">
+
+        <button
+        class="menu-btn"
+        onclick="openPage('packs')">
+        📦 Packs öffnen
+        </button>
+
+        <br>
+
+        <button
+        class="menu-btn"
+        onclick="openPage('clubPage'); loadClub();">
+        👥 Mein Verein
+        </button>
+
+    </div>
+
+</div>
+
+<!-- PACKS -->
+
+<div id="packs" class="page">
+
+    <button
+    class="back-btn"
+    onclick="openPage('home')">
+    ← Zurück
+    </button>
+
+    <h1>Packs</h1>
+
+    <div id="coinsDisplayPack" class="coins"></div>
+
+    <div style="text-align:center">
+
+        <button
+        class="menu-btn"
+        onclick="openPack()">
+        Pack öffnen (5.000 Coins)
+        </button>
+
+    </div>
+
+    <div id="result">
+
+        <div id="pack">
+            PACK
+        </div>
+
+    </div>
+
+</div>
+
+<!-- VEREIN -->
+
+<div id="clubPage" class="page">
+
+    <button
+    class="back-btn"
+    onclick="openPage('home')">
+    ← Zurück
+    </button>
+
+    <h1>Mein Verein</h1>
+
+    <div id="clubContainer"></div>
+
+</div>
+
+<script>
+
+/* Coins */
+
+let coins =
+parseInt(
+localStorage.getItem("coins")
+) || 100000;
+
+/* Verein */
+
+let club =
+JSON.parse(
+localStorage.getItem("club")
+) || [];
+
+/* Spielerpool */
+
+const players = [
+
+{
+name:"Mbappé",
+rating:97
+},
+
+{
+name:"Bellingham",
+rating:96
+},
+
+{
+name:"Musiala",
+rating:92
+},
+
+{
+name:"Wirtz",
+rating:91
+},
+
+{
+name:"Salah",
+rating:89
+},
+
+{
+name:"Palmer",
+rating:80
+}
+
+];
+
+/* Navigation */
+
+function openPage(page){
+
+document
+.querySelectorAll(".page")
+.forEach(p =>
+p.classList.remove("active"));
+
+document
+.getElementById(page)
+.classList.add("active");
+
+updateCoins();
+}
+
+/* Coins */
+
+function updateCoins(){
+
+document
+.getElementById("coinsDisplay")
+.textContent =
+"🪙 Coins: " +
+coins.toLocaleString("de-DE");
+
+document
+.getElementById("coinsDisplayPack")
+.textContent =
+"🪙 Coins: " +
+coins.toLocaleString("de-DE");
+
+localStorage.setItem(
+"coins",
+coins
+);
+}
+
+/* Pack öffnen */
+
+function openPack(){
+
+const packPrice = 5000;
+
+if(coins < packPrice){
+
+alert("Nicht genügend Coins!");
+
+return;
+}
+
+coins -= packPrice;
+
+updateCoins();
+
+const player =
+players[
+Math.floor(
+Math.random() *
+players.length
+)
+];
+
+club.push(player);
+
+localStorage.setItem(
+"club",
+JSON.stringify(club)
+);
+
+document
+.getElementById("result")
+.innerHTML = `
+
+<div class="player-card">
+
+<div class="rating">
+${player.rating}
+</div>
+
+<div class="player-name">
+${player.name}
+</div>
+
+</div>
+
+`;
+}
+
+/* Verein laden */
+
+function loadClub(){
+
+const container =
+document.getElementById(
+"clubContainer"
+);
+
+container.innerHTML = "";
+
+if(club.length === 0){
+
+container.innerHTML =
+"<h2>Noch keine Spieler gezogen.</h2>";
+
+return;
+}
+
+club.forEach(player => {
+
+container.innerHTML += `
+
+<div class="club-card">
+
+<div class="rating">
+${player.rating}
+</div>
+
+<div class="player-name">
+${player.name}
+</div>
+
+</div>
+
+`;
+
+});
+}
+
+updateCoins();
+
+</script>
+
+</body>
+</html>

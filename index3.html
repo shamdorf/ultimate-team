@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Team V3</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+    <div class="logo">
+        <h2>UT</h2>
+        <span>Ultimate Team</span>
+    </div>
+
+    <button class="nav-btn active"
+        onclick="openPage('home')">
+        🏠 Hauptmenü
+    </button>
+
+    <button class="nav-btn"
+        onclick="openPage('packs')">
+        📦 Packs
+    </button>
+
+    <button class="nav-btn"
+        onclick="openPage('club')">
+        👥 Mein Verein
+    </button>
+
+    <button class="nav-btn"
+        onclick="openPage('team')">
+        ⚽ Mein Team
+    </button>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+    <!-- TOP BAR -->
+
+    <div class="topbar">
+
+        <div id="coinsDisplay" class="coins">
+            🪙 100.000
+        </div>
+
+    </div>
+
+    <!-- HOME -->
+
+    <div id="home" class="page active">
+
+        <div class="hero">
+
+            <h1>ULTIMATE TEAM</h1>
+
+            <p>
+                Öffne Packs, sammle Spieler
+                und baue dein Traumteam.
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- PACKS -->
+
+    <div id="packs" class="page">
+
+        <h1>Packs öffnen</h1>
+
+        <div class="packs-grid">
+
+            <div class="pack bronze-pack"
+                onclick="openPack('bronze')">
+
+                <h2>Bronze Pack</h2>
+
+                <span>1.000 Coins</span>
+
+            </div>
+
+            <div class="pack silver-pack"
+                onclick="openPack('silver')">
+
+                <h2>Silber Pack</h2>
+
+                <span>2.500 Coins</span>
+
+            </div>
+
+            <div class="pack gold-pack"
+                onclick="openPack('gold')">
+
+                <h2>Gold Pack</h2>
+
+                <span>5.000 Coins</span>
+
+            </div>
+
+            <div class="pack tots-pack"
+                onclick="openPack('tots')">
+
+                <h2>TOTS Pack</h2>
+
+                <span>10.000 Coins</span>
+
+            </div>
+
+            <div class="pack toty-pack"
+                onclick="openPack('toty')">
+
+                <h2>TOTY Pack</h2>
+
+                <span>20.000 Coins</span>
+
+            </div>
+
+        </div>
+
+        <div id="packResult">
+
+            <div class="pack-placeholder">
+                PACK ÖFFNEN
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- CLUB -->
+
+    <div id="club" class="page">
+
+        <h1>Mein Verein</h1>
+
+        <div id="clubContainer">
+
+        </div>
+
+    </div>
+
+    <!-- TEAM -->
+
+    <div id="team" class="page">
+
+        <h1>Mein Team</h1>
+
+        <h2 id="teamOVR">
+            ⭐ Team OVR: 0
+        </h2>
+
+        <div id="teamContainer">
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
