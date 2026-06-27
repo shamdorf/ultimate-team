@@ -77,6 +77,7 @@ function initGame(){
     updateCurrency();
     updateStats();
     loadSidebarReports();
+    updateNotifBadge();
     if(loadData("vip") === "1"){
         const pn = document.getElementById("playerName");
         if(pn) pn.innerHTML =
@@ -368,6 +369,94 @@ function loadLeaderboard(){
 }
 
 // ======================
+// BENACHRICHTIGUNGEN
+// ======================
+
+function getNotifs(){
+    return JSON.parse(
+    loadData("notifs") || "[]") || [];
+}
+
+function pushNotif(icon, text){
+    const notifs = getNotifs();
+    notifs.unshift({
+        icon, text,
+        time: new Date().toLocaleString(
+        "de-DE",{day:"2-digit",month:"2-digit",
+        hour:"2-digit",minute:"2-digit"}),
+        read: false
+    });
+    if(notifs.length > 30) notifs.pop();
+    saveData("notifs", JSON.stringify(notifs));
+    updateNotifBadge();
+}
+
+function updateNotifBadge(){
+    const notifs = getNotifs();
+    const unread = notifs.filter(n => !n.read).length;
+    const badge = document.getElementById("notifBadge");
+    if(!badge) return;
+    if(unread > 0){
+        badge.style.display = "flex";
+        badge.textContent = unread > 9 ? "9+" : unread;
+    } else {
+        badge.style.display = "none";
+    }
+}
+
+function toggleNotifs(){
+    const dd = document.getElementById("notifDropdown");
+    const open = dd.style.display !== "none";
+    dd.style.display = open ? "none" : "block";
+    if(!open){
+        renderNotifs();
+        markNotifsRead();
+    }
+}
+
+function renderNotifs(){
+    const notifs = getNotifs();
+    const el = document.getElementById("notifList");
+    if(!el) return;
+    if(notifs.length === 0){
+        el.innerHTML =
+        '<p class="notif-empty">Keine Benachrichtigungen.</p>';
+        return;
+    }
+    el.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.read?"":"notif-unread"}">
+        <span class="notif-icon">${n.icon}</span>
+        <div class="notif-body">
+            <div class="notif-text">${n.text}</div>
+            <div class="notif-time">${n.time}</div>
+        </div>
+    </div>`).join("");
+}
+
+function markNotifsRead(){
+    const notifs = getNotifs();
+    notifs.forEach(n => n.read = true);
+    saveData("notifs", JSON.stringify(notifs));
+    updateNotifBadge();
+}
+
+function clearNotifs(){
+    saveData("notifs", "[]");
+    renderNotifs();
+    updateNotifBadge();
+}
+
+document.addEventListener("click", e => {
+    const wrapper =
+    document.querySelector(".notif-wrapper");
+    if(wrapper && !wrapper.contains(e.target)){
+        const dd =
+        document.getElementById("notifDropdown");
+        if(dd) dd.style.display = "none";
+    }
+});
+
+// ======================
 // VIP
 // ======================
 
@@ -389,6 +478,7 @@ function buyVIP(){
     saveData("vip", "1");
     updateCurrency();
     loadShop("fix");
+    pushNotif("👑", "Du bist jetzt VIP! Hole täglich 3 TOTY Packs ab.");
     alert("🎉 Willkommen als VIP! Hole jeden Tag deine 3 TOTY Packs ab.");
 }
 
@@ -425,6 +515,8 @@ function claimDailyPacks(){
     saveData("vip_lastclaim", today);
     addXP(300);
     loadShop("fix");
+    pushNotif("🎁", "VIP Tagespacks abgeholt: " +
+    drawn.map(p => p.name).join(", "));
     alert("🎁 Tägliche VIP Packs!\n\nDu hast erhalten:\n"
     + drawn.map(p => "⭐ " + p.name + " (" + p.rating + ")").join("\n"));
 }
@@ -793,6 +885,7 @@ function buyFromMarket(index){
 
     updateCurrency();
     loadShop("market");
+    pushNotif("🛒", listing.player.name + " vom Marktplatz gekauft!");
     alert(listing.player.name + " gekauft!");
 }
 
@@ -2501,6 +2594,8 @@ while(xp >= 1000){
 xp -= 1000;
 
 passLevel++;
+
+pushNotif("🎟️", "Saisonpass Level " + passLevel + " erreicht! +10.000 Coins");
 
 coins += 10000;
 
