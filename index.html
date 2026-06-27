@@ -1000,5 +1000,70 @@
 
 </div>
 
+<!-- WM WERBUNG -->
+
+<div class="wm-ad" id="wmAd">
+
+    <button class="wm-close"
+    onclick="document.getElementById('wmAd').style.display='none'">✕</button>
+
+    <!-- Sterne Hintergrund -->
+    <div class="wm-stars">
+        <span class="wm-star s1">★</span>
+        <span class="wm-star s2">★</span>
+        <span class="wm-star s3">★</span>
+        <span class="wm-star s4">★</span>
+        <span class="wm-star s5">⭐</span>
+    </div>
+
+    <!-- Pokal SVG -->
+    <div class="wm-trophy-wrap">
+        <svg class="wm-trophy" viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg">
+            <!-- Basis -->
+            <rect x="25" y="140" width="50" height="8" rx="4" fill="#c8a400"/>
+            <rect x="30" y="132" width="40" height="10" rx="3" fill="#dbb800"/>
+            <!-- Stiel -->
+            <rect x="43" y="105" width="14" height="28" rx="3" fill="#c8a400"/>
+            <!-- Henkel links -->
+            <path d="M30 40 Q10 40 10 65 Q10 85 30 85" stroke="#c8a400" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <!-- Henkel rechts -->
+            <path d="M70 40 Q90 40 90 65 Q90 85 70 85" stroke="#c8a400" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <!-- Pokal Körper -->
+            <path d="M28 10 Q28 5 50 5 Q72 5 72 10 L72 85 Q72 105 50 105 Q28 105 28 85 Z" fill="url(#goldGrad)"/>
+            <!-- Glanz -->
+            <path d="M35 15 Q38 12 42 15 L42 80 Q38 80 35 77 Z" fill="rgba(255,255,255,.25)"/>
+            <!-- Stern oben -->
+            <text x="50" y="55" text-anchor="middle" font-size="28" fill="rgba(255,255,255,.3)">★</text>
+            <defs>
+                <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stop-color="#8b6800"/>
+                    <stop offset="30%"  stop-color="#f0c000"/>
+                    <stop offset="55%"  stop-color="#ffe566"/>
+                    <stop offset="80%"  stop-color="#dba800"/>
+                    <stop offset="100%" stop-color="#7a5c00"/>
+                </linearGradient>
+            </defs>
+        </svg>
+        <div class="wm-trophy-glow"></div>
+    </div>
+
+    <!-- Text -->
+    <div class="wm-content">
+        <div class="wm-pre">FIFA</div>
+        <div class="wm-title">WORLD CUP</div>
+        <div class="wm-year">2026</div>
+        <div class="wm-hosts">
+            <span class="wm-flag">🇺🇸</span>
+            <span class="wm-flag">🇨🇦</span>
+            <span class="wm-flag">🇲🇽</span>
+        </div>
+        <div class="wm-sub">USA · Canada · México</div>
+        <div class="wm-divider-line"></div>
+        <div class="wm-tagline">Der größte Sport&shy;event der Welt</div>
+        <div class="wm-teams">48 Teams · 104 Spiele · 1 Champion</div>
+    </div>
+
+</div>
+
 </body>
 </html>

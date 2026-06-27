@@ -1082,6 +1082,183 @@ body{
     font-size:17px;
 }
 
+/* WM WERBUNG */
+
+.wm-ad{
+    position:fixed;
+    right:0;
+    top:50%;
+    transform:translateY(-50%);
+    width:210px;
+    z-index:7999;
+    background:linear-gradient(160deg,#000428 0%,#001a6e 40%,#003399 70%,#000f4d 100%);
+    border-radius:20px 0 0 20px;
+    border:1px solid rgba(255,200,0,.3);
+    border-right:none;
+    box-shadow:-8px 0 40px rgba(0,50,180,.5),
+               inset 0 0 60px rgba(0,30,120,.4);
+    overflow:hidden;
+    padding:24px 18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    animation:wmSlideIn .6s cubic-bezier(.22,1,.36,1) both;
+    animation-delay:2s;
+}
+
+@keyframes wmSlideIn{
+    from{ transform:translateY(-50%) translateX(100%); opacity:0; }
+    to{   transform:translateY(-50%) translateX(0);    opacity:1; }
+}
+
+/* Sterne */
+.wm-stars{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+}
+.wm-star{
+    position:absolute;
+    color:rgba(255,215,0,.25);
+    animation:starTwinkle 2s ease-in-out infinite;
+}
+.s1{ top:8%;  left:12%; font-size:10px; animation-delay:0s; }
+.s2{ top:20%; right:10%; font-size:7px;  animation-delay:.5s; }
+.s3{ top:55%; left:8%;  font-size:8px;  animation-delay:1s; }
+.s4{ bottom:18%; right:12%; font-size:11px; animation-delay:.3s; }
+.s5{ bottom:8%;  left:20%; font-size:9px;  animation-delay:.8s; }
+
+@keyframes starTwinkle{
+    0%,100%{ opacity:.3; transform:scale(1); }
+    50%{ opacity:1; transform:scale(1.3); }
+}
+
+/* Pokal */
+.wm-trophy-wrap{
+    position:relative;
+    margin-top:4px;
+}
+.wm-trophy{
+    width:80px;
+    height:128px;
+    filter:drop-shadow(0 0 12px rgba(255,200,0,.6));
+    animation:trophyGlow 2s ease-in-out infinite;
+    position:relative;
+    z-index:1;
+}
+@keyframes trophyGlow{
+    0%,100%{ filter:drop-shadow(0 0 10px rgba(255,200,0,.5)); }
+    50%{ filter:drop-shadow(0 0 22px rgba(255,220,0,.9)) drop-shadow(0 0 40px rgba(255,180,0,.4)); }
+}
+.wm-trophy-glow{
+    position:absolute;
+    bottom:-10px;
+    left:50%;
+    transform:translateX(-50%);
+    width:60px;
+    height:20px;
+    background:radial-gradient(ellipse,rgba(255,200,0,.4),transparent);
+    border-radius:50%;
+}
+
+/* Text */
+.wm-content{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    position:relative;
+    z-index:1;
+    text-align:center;
+}
+.wm-pre{
+    font-size:11px;
+    letter-spacing:4px;
+    color:rgba(255,200,0,.7);
+    font-weight:bold;
+    text-transform:uppercase;
+}
+.wm-title{
+    font-size:20px;
+    font-weight:900;
+    color:white;
+    letter-spacing:2px;
+    text-shadow:0 0 20px rgba(255,200,0,.5);
+    line-height:1;
+}
+.wm-year{
+    font-size:36px;
+    font-weight:900;
+    color:#ffd700;
+    text-shadow:
+        0 0 20px rgba(255,200,0,.8),
+        0 0 40px rgba(255,150,0,.4);
+    line-height:1;
+    letter-spacing:-1px;
+}
+.wm-hosts{
+    display:flex;
+    gap:8px;
+    font-size:22px;
+    margin:2px 0;
+}
+.wm-flag{
+    animation:flagWave 1.5s ease-in-out infinite;
+    display:inline-block;
+}
+.wm-flag:nth-child(2){ animation-delay:.3s; }
+.wm-flag:nth-child(3){ animation-delay:.6s; }
+@keyframes flagWave{
+    0%,100%{ transform:rotate(-5deg) scale(1); }
+    50%{ transform:rotate(5deg) scale(1.1); }
+}
+.wm-sub{
+    font-size:10px;
+    color:rgba(255,255,255,.5);
+    letter-spacing:1px;
+}
+.wm-divider-line{
+    width:100%;
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,200,0,.4),transparent);
+    margin:2px 0;
+}
+.wm-tagline{
+    font-size:12px;
+    font-weight:bold;
+    color:rgba(255,255,255,.85);
+    line-height:1.3;
+}
+.wm-teams{
+    font-size:10px;
+    color:rgba(255,200,0,.6);
+    letter-spacing:.5px;
+}
+.wm-close{
+    position:absolute;
+    top:8px;
+    left:10px;
+    background:rgba(255,255,255,.1);
+    border:none;
+    color:rgba(255,255,255,.5);
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:11px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:.2s;
+    z-index:10;
+}
+.wm-close:hover{
+    background:rgba(255,50,50,.4);
+    color:white;
+}
+
 /* COCA-COLA WERBUNG */
 
 .coke-ad-banner{
