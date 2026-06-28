@@ -82,7 +82,6 @@ function initGame(){
     loadSidebarReports();
     updateNotifBadge();
     updateQuestBadge();
-    updateWheelState();
     initTicker();
     setTimeout(checkAllAchievements, 1000);
     setTimeout(checkLoginStreak, 800);
@@ -351,105 +350,6 @@ function updateRankBanner(){
     el.style.boxShadow = `0 0 30px ${tier.glow}`;
 }
 
-// ======================
-// GLÜCKSRAD
-// ======================
-
-const wheelSegments = [
-    { label:"🪙 10.000",  icon:"🪙", text:"10.000 Coins",   coins:10000,  gems:0,    pack:null },
-    { label:"🪙 50.000",  icon:"🪙", text:"50.000 Coins",   coins:50000,  gems:0,    pack:null },
-    { label:"💎 500",     icon:"💎", text:"500 Gems",        coins:0,      gems:500,  pack:null },
-    { label:"📦 Pack",    icon:"📦", text:"1 Gold Pack",     coins:0,      gems:0,    pack:"gold" },
-    { label:"🪙 100.000", icon:"🪙", text:"100.000 Coins",  coins:100000, gems:0,    pack:null },
-    { label:"👑 TOTY",    icon:"👑", text:"1 TOTY Pack!",    coins:0,      gems:0,    pack:"toty" },
-    { label:"💎 2.000",   icon:"💎", text:"2.000 Gems",      coins:0,      gems:2000, pack:null },
-];
-const SEG = 360 / wheelSegments.length;
-let wheelSpinning = false;
-let wheelRotation = 0;
-
-function loadWheel(){
-    renderWheelPrizes();
-    updateWheelState();
-}
-
-function renderWheelPrizes(){
-    const el = document.getElementById("wheelPrizeList");
-    if(!el) return;
-    el.innerHTML = wheelSegments.map(s => `
-        <div class="wheel-prize-item">
-            <span class="wheel-prize-icon">${s.icon}</span>
-            <span>${s.text}</span>
-        </div>`).join("");
-}
-
-function updateWheelState(){
-    const today = new Date().toISOString().slice(0,10);
-    const lastSpin = loadData("wheelDate");
-    const used = lastSpin === today;
-    const btn = document.getElementById("wheelSpinBtn");
-    const badge = document.getElementById("wheelBadge");
-    if(btn) btn.disabled = used;
-    if(badge) badge.style.display = used ? "none" : "inline";
-    const timer = document.getElementById("wheelTimer");
-    if(timer && used){
-        const now = new Date();
-        const midnight = new Date(now);
-        midnight.setHours(24,0,0,0);
-        const diff = midnight - now;
-        const h = Math.floor(diff/3600000);
-        const m = Math.floor((diff%3600000)/60000);
-        timer.textContent = `Nächste Drehung in ${h}h ${m}m`;
-    } else if(timer){
-        timer.textContent = "";
-    }
-}
-
-function spinWheel(){
-    const today = new Date().toISOString().slice(0,10);
-    if(loadData("wheelDate") === today || wheelSpinning) return;
-    wheelSpinning = true;
-
-    const idx = Math.floor(Math.random() * wheelSegments.length);
-    const spins = (Math.floor(Math.random()*4)+6) * 360;
-    const target = spins + (360 - idx * SEG - SEG/2);
-    wheelRotation += target;
-
-    const wheel = document.getElementById("spinWheel");
-    wheel.style.transition = "transform 4s cubic-bezier(.17,.67,.12,1)";
-    wheel.style.transform = `rotate(${wheelRotation}deg)`;
-
-    setTimeout(() => {
-        wheelSpinning = false;
-        saveData("wheelDate", today);
-        updateWheelState();
-        giveWheelPrize(wheelSegments[idx]);
-    }, 4200);
-}
-
-function giveWheelPrize(seg){
-    if(seg.coins){ coins += seg.coins; saveData("coins", coins); }
-    if(seg.gems){ gems += seg.gems; saveData("gems", gems); }
-    if(seg.pack){
-        const pool = players.filter(p => p.rarity === seg.pack);
-        if(pool.length){
-            const p = pool[Math.floor(Math.random()*pool.length)];
-            club.push(p);
-            saveData("club", JSON.stringify(club));
-        }
-    }
-    updateCurrency();
-    pushNotif("🎰","Glücksrad: " + seg.text + " gewonnen!");
-    checkAllAchievements();
-    const res = document.getElementById("wheelResult");
-    if(res){
-        res.style.display = "block";
-        res.innerHTML = `
-        <div class="wheel-result-icon">${seg.icon}</div>
-        <div class="wheel-result-text">${seg.text}</div>
-        <div class="wheel-result-sub">Gewonnen! 🎉</div>`;
-    }
-}
 
 // ======================
 // LOGIN STREAK
@@ -705,7 +605,6 @@ const achieveDefs = [
     { id:"fifty_cards",  icon:"🗂️", name:"Großer Kader",     desc:"50 Spieler im Verein",                check: ()=> club.length >= 50 },
     { id:"pack_addict",  icon:"📦", name:"Pack-Junkie",       desc:"100 Packs öffnen",                    check: ()=> parseInt(loadData("packsOpened")||0) >= 100 },
     { id:"streak_7",     icon:"🔥", name:"7-Tage-Streak",     desc:"7 Tage hintereinander einloggen",     check: ()=> { const d=JSON.parse(loadData("streak")||"{}"); return d.current>=7 && d.claimed; } },
-    { id:"wheel_lucky",  icon:"🎰", name:"Glückspilz",        desc:"Das Glücksrad drehen",                check: ()=> !!loadData("wheelDate") },
     { id:"elite_rank",   icon:"👑", name:"Elite-Spieler",     desc:"Den Elite-Rang erreichen",            check: ()=> parseInt(loadData("wins")||0) >= 60 },
 ];
 
@@ -1578,7 +1477,6 @@ function openPage(page){
     if(page === "training") loadTraining();
     if(page === "quests") loadQuests();
     if(page === "achievements") loadAchievements();
-    if(page === "wheel") loadWheel();
     if(page === "home") updateRankBanner();
 
 }
