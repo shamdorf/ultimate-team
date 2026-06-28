@@ -2,10 +2,13 @@
 // ACCOUNT
 // ======================
 
-let accounts =
-JSON.parse(
-localStorage.getItem("ut_accounts")
-) || {};
+// Firebase email key: "." und "@" sind in Firebase-Keys verboten
+function encodeEmail(email){
+    return email.replace(/\./g, ",").replace(/@/g, "__at__");
+}
+function decodeEmail(key){
+    return key.replace(/,/g, ".").replace(/__at__/g, "@");
+}
 
 let currentUser =
 JSON.parse(
@@ -83,6 +86,8 @@ function initGame(){
     initTicker();
     setTimeout(checkAllAchievements, 1000);
     setTimeout(checkLoginStreak, 800);
+    setTimeout(syncUserStats, 2000);
+    setInterval(syncUserStats, 60000);
     if(loadData("vip") === "1"){
         const pn = document.getElementById("playerName");
         if(pn) pn.innerHTML =
@@ -125,7 +130,7 @@ function showLogin(){
     .textContent = "";
 }
 
-function login(){
+async function login(){
 
     const email =
     document.getElementById("loginEmail")
@@ -139,37 +144,33 @@ function login(){
     document.getElementById("loginError");
 
     if(!email || !password){
-        errorEl.textContent =
-        "Bitte alle Felder ausfüllen!";
+        errorEl.textContent = "Bitte alle Felder ausfüllen!";
         return;
     }
 
-    if(!accounts[email]){
-        errorEl.textContent =
-        "Kein Konto mit dieser E-Mail!";
-        return;
+    errorEl.textContent = "⏳ Einloggen…";
+
+    try {
+        const snap = await db.ref("accounts/" + encodeEmail(email)).once("value");
+        if(!snap.exists()){
+            errorEl.textContent = "Kein Konto mit dieser E-Mail!";
+            return;
+        }
+        const acc = snap.val();
+        if(acc.password !== password){
+            errorEl.textContent = "Falsches Passwort!";
+            return;
+        }
+        currentUser = { email, name: acc.name };
+        localStorage.setItem("ut_session", JSON.stringify(currentUser));
+        errorEl.textContent = "";
+        initGame();
+    } catch(e){
+        errorEl.textContent = "Verbindungsfehler. Bitte erneut versuchen.";
     }
-
-    if(accounts[email].password !== password){
-        errorEl.textContent =
-        "Falsches Passwort!";
-        return;
-    }
-
-    currentUser = {
-        email,
-        name: accounts[email].name
-    };
-
-    localStorage.setItem(
-    "ut_session",
-    JSON.stringify(currentUser)
-    );
-
-    initGame();
 }
 
-function register(){
+async function register(){
 
     const name =
     document.getElementById("regName")
@@ -191,50 +192,41 @@ function register(){
     document.getElementById("loginError");
 
     if(!name || !email || !password || !confirm){
-        errorEl.textContent =
-        "Bitte alle Felder ausfüllen!";
+        errorEl.textContent = "Bitte alle Felder ausfüllen!";
         return;
     }
-
     if(!email.includes("@")){
-        errorEl.textContent =
-        "Ungültige E-Mail-Adresse!";
+        errorEl.textContent = "Ungültige E-Mail-Adresse!";
         return;
     }
-
     if(password.length < 6){
-        errorEl.textContent =
-        "Passwort: mind. 6 Zeichen!";
+        errorEl.textContent = "Passwort: mind. 6 Zeichen!";
         return;
     }
-
     if(password !== confirm){
-        errorEl.textContent =
-        "Passwörter stimmen nicht überein!";
+        errorEl.textContent = "Passwörter stimmen nicht überein!";
         return;
     }
 
-    if(accounts[email]){
-        errorEl.textContent =
-        "E-Mail bereits registriert!";
-        return;
+    errorEl.textContent = "⏳ Registrieren…";
+
+    try {
+        const snap = await db.ref("accounts/" + encodeEmail(email)).once("value");
+        if(snap.exists()){
+            errorEl.textContent = "E-Mail bereits registriert!";
+            return;
+        }
+        await db.ref("accounts/" + encodeEmail(email)).set({
+            name, email, password,
+            coins: 100000, gems: 0, wins: 0, clubSize: 0
+        });
+        currentUser = { email, name };
+        localStorage.setItem("ut_session", JSON.stringify(currentUser));
+        errorEl.textContent = "";
+        initGame();
+    } catch(e){
+        errorEl.textContent = "Verbindungsfehler. Bitte erneut versuchen.";
     }
-
-    accounts[email] = { name, email, password };
-
-    localStorage.setItem(
-    "ut_accounts",
-    JSON.stringify(accounts)
-    );
-
-    currentUser = { email, name };
-
-    localStorage.setItem(
-    "ut_session",
-    JSON.stringify(currentUser)
-    );
-
-    initGame();
 }
 
 function logout(){
@@ -246,6 +238,17 @@ function logout(){
     location.reload();
 }
 
+function syncUserStats(){
+    if(!currentUser) return;
+    db.ref("accounts/" + encodeEmail(currentUser.email)).update({
+        coins,
+        gems,
+        wins: parseInt(loadData("wins") || 0),
+        clubSize: club.length,
+        name: currentUser.name
+    });
+}
+
 // ======================
 // RANGLISTE
 // ======================
@@ -253,126 +256,57 @@ function logout(){
 function loadLeaderboard(){
 
     const container =
-    document.getElementById(
-    "leaderboardContainer");
-
+    document.getElementById("leaderboardContainer");
     if(!container) return;
+    container.innerHTML = '<p style="opacity:.5;margin-top:20px">⏳ Lade Rangliste…</p>';
 
-    const allAccounts =
-    JSON.parse(
-    localStorage.getItem("ut_accounts")
-    ) || {};
+    db.ref("accounts").once("value").then(snap => {
+        const all = snap.val() || {};
+        const entries = Object.values(all)
+            .map(acc => ({
+                name:     acc.name || "Unbekannt",
+                email:    acc.email || "",
+                coins:    acc.coins || 0,
+                gems:     acc.gems || 0,
+                wins:     acc.wins || 0,
+                clubSize: acc.clubSize || 0,
+                isMe:     currentUser && currentUser.email === acc.email
+            }))
+            .sort((a,b) => b.coins - a.coins);
 
-    const entries = Object.values(allAccounts)
-    .map(acc => {
+        if(entries.length === 0){
+            container.innerHTML = '<p style="opacity:.5;margin-top:20px">Noch keine Spieler registriert.</p>';
+            return;
+        }
 
-        const c =
-        parseInt(
-        localStorage.getItem(acc.email + "_coins")
-        ) || 0;
-
-        const clubData =
-        JSON.parse(
-        localStorage.getItem(acc.email + "_club")
-        ) || [];
-
-        const teamData =
-        JSON.parse(
-        localStorage.getItem(acc.email + "_team")
-        ) || [];
-
-        const pl =
-        parseInt(
-        localStorage.getItem(acc.email + "_passLevel")
-        ) || 1;
-
-        const best = clubData.length > 0
-        ? clubData.reduce((a,b) =>
-            a.rating > b.rating ? a : b)
-        : null;
-
-        const ovr = teamData.length > 0
-        ? Math.round(
-            teamData.reduce((s,p) =>
-            s + p.rating, 0) / teamData.length)
-        : 0;
-
-        return {
-            name: acc.name,
-            coins: c,
-            clubSize: clubData.length,
-            best,
-            ovr,
-            passLevel: pl,
-            isMe: currentUser &&
-                  currentUser.email === acc.email
-        };
-    })
-    .sort((a,b) => b.coins - a.coins);
-
-    if(entries.length === 0){
-        container.innerHTML =
-        '<p style="opacity:.5;margin-top:20px">Noch keine Spieler registriert.</p>';
-        return;
-    }
-
-    const medals = ["🥇","🥈","🥉"];
-
-    container.innerHTML = entries.map((e, i) => `
-
-    <div class="lb-row ${e.isMe ? "lb-me" : ""}">
-
-        <div class="lb-rank">
-            ${i < 3 ? medals[i] : "#" + (i+1)}
-        </div>
-
-        <div class="lb-name">
-            ${e.name}
-            ${e.isMe
-            ? '<span class="lb-you">Du</span>'
-            : ""}
-        </div>
-
-        <div class="lb-stat">
-            <span class="lb-stat-label">Coins</span>
-            <span class="lb-stat-val">
-                ${e.coins.toLocaleString("de-DE")} 🪙
-            </span>
-        </div>
-
-        <div class="lb-stat">
-            <span class="lb-stat-label">Verein</span>
-            <span class="lb-stat-val">
-                ${e.clubSize} Spieler
-            </span>
-        </div>
-
-        <div class="lb-stat">
-            <span class="lb-stat-label">Team OVR</span>
-            <span class="lb-stat-val">
-                ${e.ovr || "—"}
-            </span>
-        </div>
-
-        <div class="lb-stat">
-            <span class="lb-stat-label">Bester</span>
-            <span class="lb-stat-val">
-                ${e.best
-                ? e.best.name + " (" + e.best.rating + ")"
-                : "—"}
-            </span>
-        </div>
-
-        <div class="lb-stat">
-            <span class="lb-stat-label">Pass Lvl</span>
-            <span class="lb-stat-val">
-                ${e.passLevel}
-            </span>
-        </div>
-
-    </div>
-
-    `).join("");
+        const medals = ["🥇","🥈","🥉"];
+        container.innerHTML = entries.map((e,i) => `
+        <div class="lb-row ${e.isMe ? "lb-me" : ""}">
+            <div class="lb-rank">${i < 3 ? medals[i] : "#"+(i+1)}</div>
+            <div class="lb-name">
+                ${e.name}
+                ${e.isMe ? '<span class="lb-you">Du</span>' : ""}
+            </div>
+            <div class="lb-stat">
+                <span class="lb-stat-label">Coins</span>
+                <span class="lb-stat-val">${e.coins.toLocaleString("de-DE")} 🪙</span>
+            </div>
+            <div class="lb-stat">
+                <span class="lb-stat-label">Siege</span>
+                <span class="lb-stat-val">${e.wins} 🏆</span>
+            </div>
+            <div class="lb-stat">
+                <span class="lb-stat-label">Verein</span>
+                <span class="lb-stat-val">${e.clubSize} Spieler</span>
+            </div>
+            <div class="lb-stat">
+                <span class="lb-stat-label">Gems</span>
+                <span class="lb-stat-val">${e.gems} 💎</span>
+            </div>
+        </div>`).join("");
+    }).catch(() => {
+        container.innerHTML = '<p style="opacity:.5;color:#ff5555">Verbindungsfehler.</p>';
+    });
 }
 
 // ======================
@@ -1296,335 +1230,208 @@ function closeOfferModal(e){
 }
 
 function confirmOffer(){
-    const price =
-    parseInt(document.getElementById("offerPrice").value);
-
-    if(!price || price < 1){
-        alert("Ungültiger Preis!"); return;
-    }
+    const price = parseInt(document.getElementById("offerPrice").value);
+    if(!price || price < 1){ alert("Ungültiger Preis!"); return; }
 
     const player = club[offerPlayerIndex];
+    const key = db.ref("marketplace").push().key;
 
-    const listings =
-    JSON.parse(
-    localStorage.getItem("ut_marketplace")
-    ) || [];
-
-    listings.push({
+    db.ref("marketplace/" + key).set({
         sellerEmail: currentUser.email,
-        sellerName: currentUser.name,
-        player,
-        price,
-        id: Date.now()
+        sellerName:  currentUser.name,
+        player, price, id: key
+    }).then(() => {
+        club.splice(offerPlayerIndex, 1);
+        saveData("club", JSON.stringify(club));
+        document.getElementById("offerModal").style.display = "none";
+        loadClub();
+        alert(player.name + " wurde im Marktplatz angeboten!");
     });
-
-    localStorage.setItem(
-    "ut_marketplace",
-    JSON.stringify(listings));
-
-    club.splice(offerPlayerIndex, 1);
-    saveData("club", JSON.stringify(club));
-
-    document.getElementById("offerModal")
-    .style.display = "none";
-
-    loadClub();
-    alert(player.name + " wurde im Marktplatz angeboten!");
 }
 
-function buyFromMarket(index){
-    const listings =
-    JSON.parse(
-    localStorage.getItem("ut_marketplace")
-    ) || [];
+function buyFromMarket(fbKey){
+    db.ref("marketplace/" + fbKey).once("value").then(snap => {
+        const listing = snap.val();
+        if(!listing){ alert("Angebot nicht mehr verfügbar!"); loadShop("market"); return; }
+        if(listing.sellerEmail === currentUser.email){
+            alert("Du kannst deinen eigenen Spieler nicht kaufen!"); return;
+        }
+        if(coins < listing.price){ alert("Nicht genügend Coins!"); return; }
 
-    const listing = listings[index];
-    if(!listing) return;
+        coins -= listing.price;
+        saveData("coins", coins);
 
-    if(listing.sellerEmail === currentUser.email){
-        alert("Du kannst deinen eigenen Spieler nicht kaufen!");
-        return;
-    }
+        // Verkäufer Coins gutschreiben
+        db.ref("accounts/" + encodeEmail(listing.sellerEmail) + "/coins")
+          .transaction(c => (c || 0) + listing.price);
 
-    if(club.some(p => p.name === listing.player.name)){
-        alert(listing.player.name + " ist bereits in deinem Verein!");
-        return;
-    }
+        club.push(listing.player);
+        saveData("club", JSON.stringify(club));
 
-    if(coins < listing.price){
-        alert("Nicht genügend Coins!"); return;
-    }
-
-    coins -= listing.price;
-    saveData("coins", coins);
-
-    const sellerCoins =
-    parseInt(
-    localStorage.getItem(
-    listing.sellerEmail + "_coins")
-    ) || 0;
-
-    localStorage.setItem(
-    listing.sellerEmail + "_coins",
-    sellerCoins + listing.price);
-
-    club.push(listing.player);
-    saveData("club", JSON.stringify(club));
-
-    listings.splice(index, 1);
-    localStorage.setItem(
-    "ut_marketplace",
-    JSON.stringify(listings));
-
-    updateCurrency();
-    loadShop("market");
-    pushNotif("🛒", listing.player.name + " vom Marktplatz gekauft!");
-    alert(listing.player.name + " gekauft!");
+        db.ref("marketplace/" + fbKey).remove();
+        updateCurrency();
+        loadShop("market");
+        pushNotif("🛒", listing.player.name + " vom Marktplatz gekauft!");
+        alert(listing.player.name + " gekauft!");
+        questProgress("buy_shop");
+        checkAllAchievements();
+    });
 }
 
-function removeFromMarket(index){
-    const listings =
-    JSON.parse(
-    localStorage.getItem("ut_marketplace")
-    ) || [];
-
-    const listing = listings[index];
-    if(!listing) return;
-
-    club.push(listing.player);
-    saveData("club", JSON.stringify(club));
-
-    listings.splice(index, 1);
-    localStorage.setItem(
-    "ut_marketplace",
-    JSON.stringify(listings));
-
-    loadShop("market");
-    alert(listing.player.name + " zurück in deinem Verein.");
+function removeFromMarket(fbKey){
+    db.ref("marketplace/" + fbKey).once("value").then(snap => {
+        const listing = snap.val();
+        if(!listing) return;
+        club.push(listing.player);
+        saveData("club", JSON.stringify(club));
+        db.ref("marketplace/" + fbKey).remove();
+        loadShop("market");
+        alert(listing.player.name + " zurück in deinem Verein.");
+    });
 }
 
 // ======================
-// CHAT
+// CHAT (Firebase Realtime)
 // ======================
 
 let currentChatKey = null;
-let chatPollInterval = null;
+let chatListener   = null;
 
-function dmKey(emailA, emailB){
-    return "ut_dm_" +
-    [emailA, emailB].sort().join("___");
+function fbDmKey(emailA, emailB){
+    return "dm_" + [encodeEmail(emailA), encodeEmail(emailB)].sort().join("___");
 }
 
 function openChat(){
-    document.getElementById("chatModal")
-    .style.display = "flex";
+    document.getElementById("chatModal").style.display = "flex";
     loadChatList();
-    chatPollInterval = setInterval(() => {
-        loadChatList();
-        if(currentChatKey) renderMessages();
-    }, 2000);
 }
 
 function closeChatModal(e){
-    if(e && e.target !==
-    document.getElementById("chatModal")) return;
-    document.getElementById("chatModal")
-    .style.display = "none";
-    clearInterval(chatPollInterval);
+    if(e && e.target !== document.getElementById("chatModal")) return;
+    document.getElementById("chatModal").style.display = "none";
+    if(chatListener){ db.ref(currentChatKey).off("value", chatListener); chatListener = null; }
     currentChatKey = null;
 }
 
 function loadChatList(){
-    const allAccounts =
-    JSON.parse(
-    localStorage.getItem("ut_accounts")
-    ) || {};
+    db.ref("accounts").once("value").then(snap => {
+        const all = snap.val() || {};
+        const others = Object.values(all).filter(a => a.email !== currentUser.email);
 
-    const groups =
-    JSON.parse(
-    localStorage.getItem("ut_groups")
-    ) || [];
+        db.ref("groups").once("value").then(gSnap => {
+            const allGroups = gSnap.val() || {};
+            const myGroups = Object.entries(allGroups)
+                .filter(([,g]) => g.members && g.members.includes(currentUser.email))
+                .map(([id, g]) => ({...g, id}));
 
-    const others = Object.values(allAccounts)
-    .filter(a => a.email !== currentUser.email);
+            let html = "";
+            others.forEach(acc => {
+                const key = "chat/" + fbDmKey(currentUser.email, acc.email);
+                const isActive = currentChatKey === key;
+                html += `<div class="cli ${isActive?"cli-active":""}"
+                    onclick="openDM('${acc.email}','${acc.name}')">
+                    <div class="cli-name">👤 ${acc.name}</div>
+                    <div class="cli-last">Direktnachricht</div>
+                </div>`;
+            });
 
-    const myGroups = groups.filter(g =>
-    g.members.includes(currentUser.email));
+            myGroups.forEach(g => {
+                const key = "chat/grp_" + g.id;
+                const isActive = currentChatKey === key;
+                html += `<div class="cli ${isActive?"cli-active":""}"
+                    onclick="openGroupChat('${g.id}','${g.name}')">
+                    <div class="cli-name">👥 ${g.name}</div>
+                    <div class="cli-last">${(g.members||[]).length} Mitglieder</div>
+                </div>`;
+            });
 
-    let html = "";
-
-    others.forEach(acc => {
-        const key = dmKey(currentUser.email, acc.email);
-        const msgs =
-        JSON.parse(localStorage.getItem(key)) || [];
-        const last = msgs[msgs.length - 1];
-        html += `
-        <div class="cli ${currentChatKey===key?"cli-active":""}"
-        onclick="openDM('${acc.email}','${acc.name}')">
-            <div class="cli-name">👤 ${acc.name}</div>
-            <div class="cli-last">${last
-                ? last.text.slice(0,28)+"…"
-                : "Noch keine Nachrichten"}</div>
-        </div>`;
+            document.getElementById("chatListItems").innerHTML =
+                html || '<p class="no-chats">Keine anderen Spieler.</p>';
+        });
     });
-
-    myGroups.forEach(g => {
-        const key = "ut_grp_" + g.id;
-        html += `
-        <div class="cli ${currentChatKey===key?"cli-active":""}"
-        onclick="openGroupChat('${g.id}','${g.name}')">
-            <div class="cli-name">👥 ${g.name}</div>
-            <div class="cli-last">${g.members.length} Mitglieder</div>
-        </div>`;
-    });
-
-    if(!html){
-        html = '<p class="no-chats">Keine anderen Spieler.</p>';
-    }
-
-    document.getElementById("chatListItems")
-    .innerHTML = html;
 }
 
 function openDM(email, name){
-    currentChatKey = dmKey(currentUser.email, email);
+    if(chatListener && currentChatKey)
+        db.ref(currentChatKey).off("value", chatListener);
+    currentChatKey = "chat/" + fbDmKey(currentUser.email, email);
     buildChatPanel("👤 " + name);
 }
 
 function openGroupChat(id, name){
-    currentChatKey = "ut_grp_" + id;
+    if(chatListener && currentChatKey)
+        db.ref(currentChatKey).off("value", chatListener);
+    currentChatKey = "chat/grp_" + id;
     buildChatPanel("👥 " + name);
 }
 
 function buildChatPanel(title){
-    document.getElementById("chatPanel")
-    .innerHTML = `
+    document.getElementById("chatPanel").innerHTML = `
     <div class="cp-header">${title}</div>
     <div class="cp-messages" id="chatMessages"></div>
     <div class="cp-input-row">
-        <input id="chatInput"
-        class="cp-input"
-        placeholder="Nachricht…"
+        <input id="chatInput" class="cp-input" placeholder="Nachricht…"
         onkeydown="if(event.key==='Enter')sendMsg()">
-        <button class="cp-send"
-        onclick="sendMsg()">➤</button>
+        <button class="cp-send" onclick="sendMsg()">➤</button>
     </div>`;
-    renderMessages();
+
+    // Echtzeit-Listener
+    chatListener = db.ref(currentChatKey).on("value", snap => {
+        const raw  = snap.val() || {};
+        const msgs = Object.values(raw).sort((a,b) => a.ts - b.ts);
+        const el   = document.getElementById("chatMessages");
+        if(!el) return;
+        el.innerHTML = msgs.map(m => `
+        <div class="msg-wrap ${m.email === currentUser.email ? "msg-mine" : "msg-theirs"}">
+            <div class="msg-from">${m.from}</div>
+            <div class="msg-bubble">${m.text}</div>
+            <div class="msg-time">${m.time}</div>
+        </div>`).join("");
+        el.scrollTop = el.scrollHeight;
+    });
+
     loadChatList();
 }
 
-function renderMessages(){
-    const msgs =
-    JSON.parse(
-    localStorage.getItem(currentChatKey)
-    ) || [];
-    const el =
-    document.getElementById("chatMessages");
-    if(!el) return;
-
-    el.innerHTML = msgs.map(m => `
-    <div class="msg-wrap ${m.email === currentUser.email
-        ? "msg-mine" : "msg-theirs"}">
-        <div class="msg-from">${m.from}</div>
-        <div class="msg-bubble">${m.text}</div>
-        <div class="msg-time">${m.time}</div>
-    </div>`).join("");
-
-    el.scrollTop = el.scrollHeight;
-}
-
 function sendMsg(){
-    const input =
-    document.getElementById("chatInput");
-    if(!input || !input.value.trim()) return;
-
-    const msgs =
-    JSON.parse(
-    localStorage.getItem(currentChatKey)
-    ) || [];
-
-    msgs.push({
-        from: currentUser.name,
+    const input = document.getElementById("chatInput");
+    if(!input || !input.value.trim() || !currentChatKey) return;
+    db.ref(currentChatKey).push({
+        from:  currentUser.name,
         email: currentUser.email,
-        text: input.value.trim(),
-        time: new Date().toLocaleTimeString(
-        "de-DE",
-        {hour:"2-digit", minute:"2-digit"})
+        text:  input.value.trim(),
+        time:  new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}),
+        ts:    Date.now()
     });
-
-    localStorage.setItem(
-    currentChatKey,
-    JSON.stringify(msgs));
-
     input.value = "";
-    renderMessages();
 }
 
 function showNewGroup(){
-    const allAccounts =
-    JSON.parse(
-    localStorage.getItem("ut_accounts")
-    ) || {};
-
-    const others = Object.values(allAccounts)
-    .filter(a => a.email !== currentUser.email);
-
-    document.getElementById("groupMemberList")
-    .innerHTML = others.length > 0
-    ? others.map(a => `
-        <label class="member-check-label">
-            <input type="checkbox"
-            value="${a.email}"> ${a.name}
-        </label>`).join("")
-    : '<p style="opacity:.5">Keine anderen Spieler.</p>';
-
-    document.getElementById("groupNameInput")
-    .value = "";
-    document.getElementById("newGroupModal")
-    .style.display = "flex";
+    db.ref("accounts").once("value").then(snap => {
+        const all = snap.val() || {};
+        const others = Object.values(all).filter(a => a.email !== currentUser.email);
+        document.getElementById("groupMemberList").innerHTML = others.length > 0
+            ? others.map(a => `<label class="member-check-label">
+                <input type="checkbox" value="${a.email}"> ${a.name}</label>`).join("")
+            : '<p style="opacity:.5">Keine anderen Spieler.</p>';
+        document.getElementById("groupNameInput").value = "";
+        document.getElementById("newGroupModal").style.display = "flex";
+    });
 }
 
 function closeNewGroupModal(e){
-    if(e && e.target !==
-    document.getElementById("newGroupModal")) return;
-    document.getElementById("newGroupModal")
-    .style.display = "none";
+    if(e && e.target !== document.getElementById("newGroupModal")) return;
+    document.getElementById("newGroupModal").style.display = "none";
 }
 
 function createGroup(){
-    const name =
-    document.getElementById("groupNameInput")
-    .value.trim();
-
-    if(!name){
-        alert("Gruppenname eingeben!"); return;
-    }
-
-    const checked = [
-    ...document.querySelectorAll(
-    "#groupMemberList input:checked")];
-
-    if(checked.length === 0){
-        alert("Mindestens 1 Mitglied auswählen!");
-        return;
-    }
-
-    const members = [
-    currentUser.email,
-    ...checked.map(c => c.value)];
-
-    const groups =
-    JSON.parse(
-    localStorage.getItem("ut_groups")
-    ) || [];
-
+    const name = document.getElementById("groupNameInput").value.trim();
+    if(!name){ alert("Gruppenname eingeben!"); return; }
+    const checked = [...document.querySelectorAll("#groupMemberList input:checked")];
+    if(checked.length === 0){ alert("Mindestens 1 Mitglied auswählen!"); return; }
+    const members = [currentUser.email, ...checked.map(c => c.value)];
     const id = Date.now().toString(36);
-    groups.push({id, name, members});
-
-    localStorage.setItem(
-    "ut_groups",
-    JSON.stringify(groups));
-
+    db.ref("groups/" + id).set({ id, name, members });
     closeNewGroupModal();
     openGroupChat(id, name);
 }
@@ -1633,90 +1440,53 @@ function createGroup(){
 // FEHLER MELDEN
 // ======================
 
-let reports =
-JSON.parse(
-localStorage.getItem("ut_reports")
-) || [];
-
 function openReport(){
-    document.getElementById("reportModal")
-    .style.display = "flex";
-    document.getElementById("reportText")
-    .value = "";
-    document.getElementById("reportSuccess")
-    .textContent = "";
+    document.getElementById("reportModal").style.display = "flex";
+    document.getElementById("reportText").value = "";
+    document.getElementById("reportSuccess").textContent = "";
 }
 
 function closeReport(e){
-    if(e && e.target !==
-    document.getElementById("reportModal")) return;
-    document.getElementById("reportModal")
-    .style.display = "none";
+    if(e && e.target !== document.getElementById("reportModal")) return;
+    document.getElementById("reportModal").style.display = "none";
 }
 
 function submitReport(){
-    const type =
-    document.getElementById("reportType").value;
-    const text =
-    document.getElementById("reportText").value.trim();
-
+    const type = document.getElementById("reportType").value;
+    const text = document.getElementById("reportText").value.trim();
     if(!text){
-        document.getElementById("reportSuccess")
-        .textContent = "Bitte Fehler beschreiben!";
-        document.getElementById("reportSuccess")
-        .style.color = "#ff5555";
+        document.getElementById("reportSuccess").textContent = "Bitte Fehler beschreiben!";
+        document.getElementById("reportSuccess").style.color = "#ff5555";
         return;
     }
-
-    const report = {
-        type,
-        text,
+    db.ref("reports").push({
+        type, text,
         user: currentUser ? currentUser.name : "Anonym",
-        time: new Date().toLocaleString("de-DE",
-            {day:"2-digit",month:"2-digit",
-             hour:"2-digit",minute:"2-digit"})
-    };
-
-    reports.unshift(report);
-    if(reports.length > 20) reports.pop();
-
-    localStorage.setItem(
-    "ut_reports",
-    JSON.stringify(reports)
-    );
-
-    document.getElementById("reportSuccess")
-    .textContent = "✅ Bericht gesendet!";
-    document.getElementById("reportSuccess")
-    .style.color = "#00e676";
-
+        time: new Date().toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})
+    });
+    document.getElementById("reportSuccess").textContent = "✅ Bericht gesendet!";
+    document.getElementById("reportSuccess").style.color = "#00e676";
     loadSidebarReports();
-
-    setTimeout(() =>
-    document.getElementById("reportModal")
-    .style.display = "none", 1200);
+    setTimeout(() => document.getElementById("reportModal").style.display = "none", 1200);
 }
 
 function loadSidebarReports(){
-    const container =
-    document.getElementById("sidebarReports");
+    const container = document.getElementById("sidebarReports");
     if(!container) return;
-
-    if(reports.length === 0){
-        container.innerHTML =
-        '<p class="no-reports">Keine Berichte.</p>';
-        return;
-    }
-
-    container.innerHTML = reports
-    .slice(0, 8)
-    .map(r => `
-        <div class="sidebar-report-item">
-            <span class="report-type-tag">${r.type}</span>
-            <span class="report-item-text">${r.text.slice(0,40)}${r.text.length>40?"…":""}</span>
-            <span class="report-item-meta">${r.user} · ${r.time}</span>
-        </div>
-    `).join("");
+    db.ref("reports").limitToLast(8).once("value").then(snap => {
+        const raw = snap.val() || {};
+        const reports = Object.values(raw).reverse();
+        if(reports.length === 0){
+            container.innerHTML = '<p class="no-reports">Keine Berichte.</p>';
+            return;
+        }
+        container.innerHTML = reports.map(r => `
+            <div class="sidebar-report-item">
+                <span class="report-type-tag">${r.type}</span>
+                <span class="report-item-text">${r.text.slice(0,40)}${r.text.length>40?"…":""}</span>
+                <span class="report-item-meta">${r.user} · ${r.time}</span>
+            </div>`).join("");
+    });
 }
 
 // ======================
@@ -2790,39 +2560,31 @@ if(activeTab === "fix"){
 }
 
 function loadMarketplace(container){
-
-const listings =
-JSON.parse(
-localStorage.getItem("ut_marketplace")
-) || [];
-
-if(listings.length === 0){
-    container.innerHTML =
-    '<p style="opacity:.5;margin-top:20px;font-size:16px">Noch keine Angebote im Marktplatz.</p>';
-    return;
-}
-
-listings.forEach((listing, i) => {
-    const p = listing.player;
-    const isMine =
-    listing.sellerEmail === currentUser.email;
-
-    container.innerHTML += `
-    <div class="club-card ${p.rarity} ${p.img?"has-img":""}">
-        <div class="player-rating">${p.rating}</div>
-        ${playerImg(p)}
-        <div class="player-name">${p.name}</div>
-        <p style="font-size:12px;opacity:.6">von ${listing.sellerName}</p>
-        <p>💰 ${listing.price.toLocaleString("de-DE")}</p>
-        ${isMine
-        ? `<button class="sell-btn"
-           onclick="removeFromMarket(${i})">
-           ❌ Zurückziehen</button>`
-        : `<button class="buy-btn"
-           onclick="buyFromMarket(${i})">
-           Kaufen</button>`}
-    </div>`;
-});
+    container.innerHTML = '<p style="opacity:.5;margin-top:20px">⏳ Lade Marktplatz…</p>';
+    db.ref("marketplace").once("value").then(snap => {
+        const raw = snap.val() || {};
+        const listings = Object.entries(raw).map(([key, val]) => ({...val, fbKey: key}));
+        if(listings.length === 0){
+            container.innerHTML = '<p style="opacity:.5;margin-top:20px;font-size:16px">Noch keine Angebote im Marktplatz.</p>';
+            return;
+        }
+        container.innerHTML = "";
+        listings.forEach(listing => {
+            const p = listing.player;
+            const isMine = listing.sellerEmail === currentUser.email;
+            container.innerHTML += `
+            <div class="club-card ${p.rarity} ${p.img?"has-img":""}">
+                <div class="player-rating">${p.rating}</div>
+                ${playerImg(p)}
+                <div class="player-name">${p.name}</div>
+                <p style="font-size:12px;opacity:.6">von ${listing.sellerName}</p>
+                <p>💰 ${listing.price.toLocaleString("de-DE")}</p>
+                ${isMine
+                ? `<button class="sell-btn" onclick="removeFromMarket('${listing.fbKey}')">❌ Zurückziehen</button>`
+                : `<button class="buy-btn" onclick="buyFromMarket('${listing.fbKey}')">Kaufen</button>`}
+            </div>`;
+        });
+    });
 }
 
 function buyPlayer(name){

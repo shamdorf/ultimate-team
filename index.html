@@ -1052,6 +1052,24 @@
 
 </div>
 
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBjJSVR7kl7CH67CrfAIZhIYRbjoekQksQ",
+  authDomain: "ultimate-soccer-5bae7.firebaseapp.com",
+  databaseURL: "https://ultimate-soccer-5bae7-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "ultimate-soccer-5bae7",
+  storageBucket: "ultimate-soccer-5bae7.firebasestorage.app",
+  messagingSenderId: "969607294350",
+  appId: "1:969607294350:web:db10c8439501126e0ac8df"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+</script>
+
 <script src="script.js"></script>
 
 <!-- COCA-COLA WERBUNG -->
