@@ -449,31 +449,43 @@ function loadQuests(){
     const el = document.getElementById("questList");
     if(!el) return;
 
-    el.innerHTML = questDefs.map(q => {
+    const total = questDefs.length;
+    const claimedCount = questDefs.filter(q => data.claimed[q.id]).length;
+    const todayStr = new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
+
+    el.innerHTML = `
+    <div class="quest-header">
+        <div class="quest-header-left">
+            <div class="quest-header-title">Tägliche Aufgaben</div>
+            <div class="quest-header-sub">${claimedCount} von ${total} abgeschlossen</div>
+        </div>
+        <div class="quest-header-right">
+            <div class="quest-header-date">${todayStr}</div>
+            <div class="quest-header-reset">Reset um 00:00 Uhr</div>
+        </div>
+    </div>` +
+    questDefs.map(q => {
         const prog = data.progress[q.id] || 0;
-        const done = prog >= q.target;
+        const isDone = prog >= q.target;
         const claimed = data.claimed[q.id];
         const pct = Math.min(100, (prog / q.target) * 100);
 
         return `
         <div class="quest-card ${claimed ? "quest-done" : ""}">
-            <div class="quest-icon">${q.icon}</div>
+            <div class="quest-icon-wrap">${q.icon}</div>
             <div class="quest-body">
                 <div class="quest-label">${q.label}</div>
                 <div class="quest-progress-bar">
                     <div class="quest-fill" style="width:${pct}%"></div>
                 </div>
-                <div class="quest-prog-text">
-                    ${prog} / ${q.target}
-                </div>
+                <div class="quest-prog-text">${prog} / ${q.target}</div>
             </div>
             <div class="quest-right">
-                <div class="quest-reward">${q.reward}</div>
+                <div class="quest-reward">🎁 ${q.reward}</div>
                 ${claimed
                     ? '<div class="quest-claimed">✔ Erhalten</div>'
-                    : done
-                    ? `<button class="quest-claim-btn"
-                       onclick="claimQuest('${q.id}')">Abholen!</button>`
+                    : isDone
+                    ? `<button class="quest-claim-btn" onclick="claimQuest('${q.id}')">✨ Abholen</button>`
                     : ""}
             </div>
         </div>`;
@@ -553,7 +565,7 @@ function checkAllAchievements(){
 
 function showAchievementPopup(def){
     const popup = document.getElementById("achievePopup");
-    document.getElementById("achieveIcon").textContent = def.icon;
+    document.getElementById("achieveIcon").innerHTML = def.icon;
     document.getElementById("achieveName").textContent = def.name;
     popup.style.display = "flex";
     clearTimeout(window._achieveTimer);
@@ -567,16 +579,33 @@ function loadAchievements(){
     const el = document.getElementById("achieveList");
     if(!el) return;
 
-    el.innerHTML = achieveDefs.map(a => {
-        const done = unlocked.includes(a.id);
+    const total = achieveDefs.length;
+    const done  = unlocked.length;
+    const pct   = Math.round((done/total)*100);
+
+    el.innerHTML = `
+    <div class="achieve-page-header" style="grid-column:1/-1">
+        <div>
+            <div class="achieve-page-count">${done} / ${total}</div>
+            <div class="achieve-page-sub">Erfolge freigeschaltet</div>
+        </div>
+        <div style="text-align:right">
+            <div class="achieve-page-pct">${pct}% abgeschlossen</div>
+            <div style="margin-top:8px;width:140px;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#ffa000,#ffd700);border-radius:4px;transition:.4s"></div>
+            </div>
+        </div>
+    </div>` +
+    achieveDefs.map(a => {
+        const isDone = unlocked.includes(a.id);
         return `
-        <div class="achieve-card ${done ? "achieve-unlocked" : "achieve-locked"}">
-            <div class="achieve-card-icon">${done ? a.icon : "🔒"}</div>
+        <div class="achieve-card ${isDone ? "achieve-unlocked" : "achieve-locked"}">
+            <div class="achieve-card-icon-wrap">${isDone ? a.icon : "🔒"}</div>
             <div class="achieve-card-body">
                 <div class="achieve-card-name">${a.name}</div>
                 <div class="achieve-card-desc">${a.desc}</div>
             </div>
-            ${done ? '<div class="achieve-check">✔</div>' : ""}
+            ${isDone ? '<div class="achieve-check">✔</div>' : ""}
         </div>`;
     }).join("");
 }
