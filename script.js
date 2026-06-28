@@ -90,6 +90,8 @@ function initGame(){
     localStorage.getItem("ut_accent") || "#00d4ff");
     if(localStorage.getItem("ut_animations")==="off")
         document.body.classList.add("no-animations");
+    if(localStorage.getItem("ut_ticker")==="off")
+        applyTickerSetting(false);
 }
 
 window.onload = () => {
@@ -952,6 +954,10 @@ function loadSettings(){
     localStorage.getItem("ut_animations") !== "off";
     if(el("toggleAnimations"))
         el("toggleAnimations").checked = anim;
+    const ticker =
+    localStorage.getItem("ut_ticker") !== "off";
+    if(el("toggleTicker"))
+        el("toggleTicker").checked = ticker;
     const accent =
     localStorage.getItem("ut_accent") || "#00d4ff";
     applyAccentColor(accent);
@@ -993,6 +999,21 @@ function applyAnimations(on){
     "ut_animations", on ? "on" : "off");
     document.body.classList.toggle(
     "no-animations", !on);
+}
+
+function applyTickerSetting(on){
+    localStorage.setItem("ut_ticker", on ? "on" : "off");
+    const bar = document.querySelector(".ticker-bar");
+    if(!bar) return;
+    if(on){
+        bar.style.display = "";
+        document.querySelector(".sidebar").style.marginTop = "";
+        document.querySelector(".main").style.marginTop = "";
+    } else {
+        bar.style.display = "none";
+        document.querySelector(".sidebar").style.marginTop = "0";
+        document.querySelector(".main").style.marginTop = "0";
+    }
 }
 
 function setAccentColor(color){
