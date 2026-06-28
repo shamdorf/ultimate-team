@@ -83,6 +83,23 @@
 
 </div>
 
+<!-- TRANSFER TICKER -->
+<div class="ticker-bar">
+    <span class="ticker-label">🔴 LIVE</span>
+    <div class="ticker-track">
+        <div class="ticker-content" id="tickerContent"></div>
+    </div>
+</div>
+
+<!-- ACHIEVEMENT POPUP -->
+<div id="achievePopup" class="achieve-popup" style="display:none">
+    <div class="achieve-icon" id="achieveIcon">🏆</div>
+    <div class="achieve-body">
+        <div class="achieve-title">Erfolg freigeschaltet!</div>
+        <div class="achieve-name" id="achieveName"></div>
+    </div>
+</div>
+
 <!-- SIDEBAR -->
 
 <div class="sidebar">
@@ -149,6 +166,19 @@
     class="nav-btn"
     onclick="openPage('pass')">
     🎟️ Saisonpass
+    </button>
+
+    <button
+    class="nav-btn"
+    onclick="openPage('quests')">
+    🎯 Tägliche Aufgaben
+    <span id="questBadge" class="quest-badge" style="display:none">!</span>
+    </button>
+
+    <button
+    class="nav-btn"
+    onclick="openPage('achievements')">
+    🏆 Erfolge
     </button>
 
     <button
@@ -793,6 +823,21 @@
 
         </div>
 
+    </div>
+
+    <!-- TÄGLICHE AUFGABEN -->
+    <div id="quests" class="page">
+        <h1 class="settings-title">🎯 Tägliche Aufgaben</h1>
+        <p style="opacity:.5;margin-bottom:24px;font-size:14px">
+            Aufgaben werden täglich um Mitternacht erneuert.
+        </p>
+        <div id="questList"></div>
+    </div>
+
+    <!-- ERFOLGE -->
+    <div id="achievements" class="page">
+        <h1 class="settings-title">🏆 Erfolge</h1>
+        <div id="achieveList" class="achieve-grid"></div>
     </div>
 
     <!-- SETTINGS -->

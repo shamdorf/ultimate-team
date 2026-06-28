@@ -78,6 +78,9 @@ function initGame(){
     updateStats();
     loadSidebarReports();
     updateNotifBadge();
+    updateQuestBadge();
+    initTicker();
+    setTimeout(checkAllAchievements, 1000);
     if(loadData("vip") === "1"){
         const pn = document.getElementById("playerName");
         if(pn) pn.innerHTML =
@@ -366,6 +369,216 @@ function loadLeaderboard(){
     </div>
 
     `).join("");
+}
+
+// ======================
+// TRANSFER TICKER
+// ======================
+
+const tickerNews = [
+    "🔴 BREAKING: Mbappé verlängert Vertrag bis 2030!",
+    "💰 Ronaldo für 800 Mio. € zu Al-Nassr gewechselt",
+    "⭐ Bellingham: 'Ich will den Ballon d'Or gewinnen'",
+    "🏆 Real Madrid gewinnt die Champions League zum 16. Mal!",
+    "😱 Haaland bricht Bundesliga-Torrekord mit 52 Toren",
+    "🔵 Manchester City verpflichtet Lamine Yamal für 400 Mio.",
+    "🇧🇷 Brasilien ist Favorit für die WM 2026",
+    "🤝 Neymar kehrt zu Barcelona zurück — offiziell bestätigt!",
+    "🔥 Vinicius Jr. ist der wertvollste Spieler der Welt",
+    "⚽ Kylian Mbappé: 'Ultimate Team ist mein Lieblingsspiel'",
+    "🏟️ Neues 120.000-Plätze-Stadion in Riad eröffnet",
+    "💎 Pele-TOTY-Karte bricht alle Preisrekorde",
+    "🚀 Jindaui gilt als bester Spieler seiner Generation",
+    "📊 FIFA 27: Haaland mit Rating 99 angekündigt",
+];
+
+function initTicker(){
+    const el = document.getElementById("tickerContent");
+    if(!el) return;
+    const doubled = [...tickerNews, ...tickerNews];
+    el.textContent = doubled.join("   ·   ");
+}
+
+// ======================
+// TÄGLICHE AUFGABEN
+// ======================
+
+const questDefs = [
+    { id:"open_pack",  icon:"📦", label:"Öffne 3 Packs",         target:3,  reward:"50.000 🪙",  coins:50000 },
+    { id:"win_match",  icon:"🏆", label:"Gewinne 2 Spiele",      target:2,  reward:"30.000 🪙",  coins:30000 },
+    { id:"sell_player",icon:"💸", label:"Verkaufe 1 Spieler",    target:1,  reward:"20.000 🪙",  coins:20000 },
+    { id:"buy_shop",   icon:"🛒", label:"Kaufe 1 Spieler im Shop",target:1, reward:"1 TOTY Pack", coins:0, pack:"toty" },
+    { id:"add_team",   icon:"⚽", label:"Stelle 5 Spieler auf",  target:5,  reward:"15.000 🪙",  coins:15000 },
+];
+
+function getQuestData(){
+    const today = new Date().toISOString().slice(0,10);
+    const raw = JSON.parse(loadData("quests") || "{}");
+    if(raw.date !== today){
+        const fresh = { date: today, progress:{}, claimed:{} };
+        questDefs.forEach(q => fresh.progress[q.id] = 0);
+        saveData("quests", JSON.stringify(fresh));
+        return fresh;
+    }
+    return raw;
+}
+
+function saveQuestData(data){
+    saveData("quests", JSON.stringify(data));
+}
+
+function questProgress(id, amount = 1){
+    const data = getQuestData();
+    if(data.claimed[id]) return;
+    data.progress[id] = (data.progress[id] || 0) + amount;
+    saveQuestData(data);
+    updateQuestBadge();
+}
+
+function updateQuestBadge(){
+    const data = getQuestData();
+    const hasReady = questDefs.some(q =>
+        !data.claimed[q.id] &&
+        (data.progress[q.id] || 0) >= q.target);
+    const badge = document.getElementById("questBadge");
+    if(badge) badge.style.display = hasReady ? "inline" : "none";
+}
+
+function loadQuests(){
+    const data = getQuestData();
+    const el = document.getElementById("questList");
+    if(!el) return;
+
+    el.innerHTML = questDefs.map(q => {
+        const prog = data.progress[q.id] || 0;
+        const done = prog >= q.target;
+        const claimed = data.claimed[q.id];
+        const pct = Math.min(100, (prog / q.target) * 100);
+
+        return `
+        <div class="quest-card ${claimed ? "quest-done" : ""}">
+            <div class="quest-icon">${q.icon}</div>
+            <div class="quest-body">
+                <div class="quest-label">${q.label}</div>
+                <div class="quest-progress-bar">
+                    <div class="quest-fill" style="width:${pct}%"></div>
+                </div>
+                <div class="quest-prog-text">
+                    ${prog} / ${q.target}
+                </div>
+            </div>
+            <div class="quest-right">
+                <div class="quest-reward">${q.reward}</div>
+                ${claimed
+                    ? '<div class="quest-claimed">✔ Erhalten</div>'
+                    : done
+                    ? `<button class="quest-claim-btn"
+                       onclick="claimQuest('${q.id}')">Abholen!</button>`
+                    : ""}
+            </div>
+        </div>`;
+    }).join("");
+}
+
+function claimQuest(id){
+    const data = getQuestData();
+    if(data.claimed[id]) return;
+    const q = questDefs.find(x => x.id === id);
+    if(!q) return;
+
+    data.claimed[id] = true;
+    saveQuestData(data);
+
+    if(q.coins){
+        coins += q.coins;
+        saveData("coins", coins);
+        updateCurrency();
+        pushNotif("🎯", "Aufgabe abgeschlossen: " + q.label + " +" + q.reward);
+    }
+    if(q.pack){
+        const pool = players.filter(p =>
+            p.rarity === q.pack &&
+            !club.some(c => c.name === p.name));
+        if(pool.length > 0){
+            const p = pool[Math.floor(Math.random()*pool.length)];
+            club.push(p);
+            saveData("club", JSON.stringify(club));
+            pushNotif("📦", "Quest-Pack geöffnet: " + p.name + " (" + p.rating + ")");
+        }
+    }
+
+    checkAchievement("quest_master");
+    loadQuests();
+    updateQuestBadge();
+}
+
+// ======================
+// ERFOLGE
+// ======================
+
+const achieveDefs = [
+    { id:"first_card",   icon:"🃏", name:"Erste Karte",       desc:"Ziehe deinen ersten Spieler",        check: ()=> club.length >= 1 },
+    { id:"ten_cards",    icon:"👥", name:"Zehn Hoch",         desc:"10 Spieler im Verein",                check: ()=> club.length >= 10 },
+    { id:"full_team",    icon:"⚽", name:"Volle Kraft",       desc:"11 Spieler im Team aufstellen",       check: ()=> team.length >= 11 },
+    { id:"first_win",    icon:"🏆", name:"Erster Sieg",       desc:"Ein Spiel gewinnen",                  check: ()=> parseInt(loadData("wins")||0) >= 1 },
+    { id:"five_wins",    icon:"🔥", name:"Siegesserie",       desc:"5 Spiele gewinnen",                   check: ()=> parseInt(loadData("wins")||0) >= 5 },
+    { id:"toty_owner",   icon:"👑", name:"Elite-Sammler",     desc:"Einen TOTY-Spieler besitzen",         check: ()=> club.some(p=>p.rarity==="toty") },
+    { id:"vip_member",   icon:"💎", name:"VIP-Status",        desc:"VIP-Mitgliedschaft kaufen",           check: ()=> loadData("vip")==="1" },
+    { id:"rich",         icon:"💰", name:"Millionär",         desc:"1 Mio. Coins besitzen",               check: ()=> coins >= 1000000 },
+    { id:"mega_rich",    icon:"🤑", name:"Milliardär",        desc:"1 Mrd. Coins besitzen",               check: ()=> coins >= 1000000000 },
+    { id:"quest_master", icon:"🎯", name:"Aufgaben-Meister", desc:"Eine tägliche Aufgabe abschließen",   check: ()=> { const d=getQuestData(); return Object.keys(d.claimed||{}).length>=1; } },
+    { id:"fifty_cards",  icon:"🗂️", name:"Großer Kader",     desc:"50 Spieler im Verein",                check: ()=> club.length >= 50 },
+    { id:"pack_addict",  icon:"📦", name:"Pack-Junkie",       desc:"100 Packs öffnen",                    check: ()=> parseInt(loadData("packsOpened")||0) >= 100 },
+];
+
+function getUnlockedAchievements(){
+    return JSON.parse(loadData("achievements") || "[]");
+}
+
+function checkAchievement(id){
+    const unlocked = getUnlockedAchievements();
+    if(unlocked.includes(id)) return;
+    const def = achieveDefs.find(a => a.id === id);
+    if(!def || !def.check()) return;
+
+    unlocked.push(id);
+    saveData("achievements", JSON.stringify(unlocked));
+    showAchievementPopup(def);
+    pushNotif("🏆", "Erfolg: " + def.name + " — " + def.desc);
+}
+
+function checkAllAchievements(){
+    achieveDefs.forEach(a => checkAchievement(a.id));
+}
+
+function showAchievementPopup(def){
+    const popup = document.getElementById("achievePopup");
+    document.getElementById("achieveIcon").textContent = def.icon;
+    document.getElementById("achieveName").textContent = def.name;
+    popup.style.display = "flex";
+    clearTimeout(window._achieveTimer);
+    window._achieveTimer = setTimeout(()=>{
+        popup.style.display = "none";
+    }, 3500);
+}
+
+function loadAchievements(){
+    const unlocked = getUnlockedAchievements();
+    const el = document.getElementById("achieveList");
+    if(!el) return;
+
+    el.innerHTML = achieveDefs.map(a => {
+        const done = unlocked.includes(a.id);
+        return `
+        <div class="achieve-card ${done ? "achieve-unlocked" : "achieve-locked"}">
+            <div class="achieve-card-icon">${done ? a.icon : "🔒"}</div>
+            <div class="achieve-card-body">
+                <div class="achieve-card-name">${a.name}</div>
+                <div class="achieve-card-desc">${a.desc}</div>
+            </div>
+            ${done ? '<div class="achieve-check">✔</div>' : ""}
+        </div>`;
+    }).join("");
 }
 
 // ======================
@@ -1313,6 +1526,8 @@ function openPage(page){
     if(page === "leaderboard") loadLeaderboard();
     if(page === "settings") loadSettings();
     if(page === "training") loadTraining();
+    if(page === "quests") loadQuests();
+    if(page === "achievements") loadAchievements();
 
 }
 
@@ -1957,6 +2172,11 @@ function openPack(type){
 
     saveData("club", JSON.stringify(club));
 
+    const po = parseInt(loadData("packsOpened")||0)+1;
+    saveData("packsOpened", po);
+    questProgress("open_pack");
+    checkAllAchievements();
+
     addXP(50);
 
     // TOTY Effekt
@@ -2082,7 +2302,7 @@ player.rating
 club.splice(index,1);
 
 saveData("club", JSON.stringify(club));
-
+questProgress("sell_player");
 updateCurrency();
 
 loadClub();
@@ -2484,6 +2704,10 @@ Math.floor(Math.random() * myGoals);
 result = "Sieg";
 coinsWon = 5000;
 xpWon = 100;
+const wins = parseInt(loadData("wins")||0)+1;
+saveData("wins", wins);
+questProgress("win_match");
+checkAllAchievements();
 
 } else if(rand < winChance + 0.15){
 
