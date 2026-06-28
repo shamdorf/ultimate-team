@@ -79,8 +79,10 @@ function initGame(){
     loadSidebarReports();
     updateNotifBadge();
     updateQuestBadge();
+    updateWheelState();
     initTicker();
     setTimeout(checkAllAchievements, 1000);
+    setTimeout(checkLoginStreak, 800);
     if(loadData("vip") === "1"){
         const pn = document.getElementById("playerName");
         if(pn) pn.innerHTML =
@@ -374,6 +376,231 @@ function loadLeaderboard(){
 }
 
 // ======================
+// SAISON-RANG
+// ======================
+
+const rankTiers = [
+    { name:"Bronze",  min:0,  color:"#cd7f32", glow:"rgba(205,127,50,.4)",  icon:"🥉" },
+    { name:"Silber",  min:5,  color:"#c0c0c0", glow:"rgba(192,192,192,.4)", icon:"🥈" },
+    { name:"Gold",    min:15, color:"#ffd700", glow:"rgba(255,215,0,.4)",   icon:"🥇" },
+    { name:"Platin",  min:30, color:"#00e5ff", glow:"rgba(0,229,255,.4)",   icon:"💎" },
+    { name:"Elite",   min:60, color:"#ff00ff", glow:"rgba(255,0,255,.4)",   icon:"👑" },
+];
+
+function getSaisonRank(){
+    const wins = parseInt(loadData("wins") || 0);
+    let tier = rankTiers[0];
+    for(const t of rankTiers) if(wins >= t.min) tier = t;
+    const next = rankTiers[rankTiers.indexOf(tier)+1];
+    return { tier, wins, next };
+}
+
+function updateRankBanner(){
+    const el = document.getElementById("rankBanner");
+    if(!el) return;
+    const { tier, wins, next } = getSaisonRank();
+    const pct = next
+        ? Math.min(100, ((wins - tier.min) / (next.min - tier.min)) * 100)
+        : 100;
+    el.innerHTML = `
+    <div class="rank-tier-icon">${tier.icon}</div>
+    <div class="rank-info">
+        <div class="rank-tier-name" style="color:${tier.color}">${tier.name}</div>
+        <div class="rank-progress-bar">
+            <div class="rank-fill" style="width:${pct}%;background:${tier.color};
+            box-shadow:0 0 10px ${tier.glow}"></div>
+        </div>
+        <div class="rank-prog-text">${wins} Siege${next ? ` · ${next.min - wins} bis ${next.name}` : " · Max. Rang!"}</div>
+    </div>
+    <div class="rank-wins-count" style="color:${tier.color}">${wins}<span>W</span></div>`;
+    el.style.borderColor = tier.color.replace(")",", .3)").replace("rgb","rgba") || "rgba(255,215,0,.3)";
+    el.style.boxShadow = `0 0 30px ${tier.glow}`;
+}
+
+// ======================
+// GLÜCKSRAD
+// ======================
+
+const wheelSegments = [
+    { label:"🪙 10.000",  icon:"🪙", text:"10.000 Coins",   coins:10000,  gems:0,    pack:null },
+    { label:"🪙 50.000",  icon:"🪙", text:"50.000 Coins",   coins:50000,  gems:0,    pack:null },
+    { label:"💎 500",     icon:"💎", text:"500 Gems",        coins:0,      gems:500,  pack:null },
+    { label:"📦 Pack",    icon:"📦", text:"1 Gold Pack",     coins:0,      gems:0,    pack:"gold" },
+    { label:"🪙 100.000", icon:"🪙", text:"100.000 Coins",  coins:100000, gems:0,    pack:null },
+    { label:"👑 TOTY",    icon:"👑", text:"1 TOTY Pack!",    coins:0,      gems:0,    pack:"toty" },
+    { label:"💎 2.000",   icon:"💎", text:"2.000 Gems",      coins:0,      gems:2000, pack:null },
+];
+const SEG = 360 / wheelSegments.length;
+let wheelSpinning = false;
+let wheelRotation = 0;
+
+function loadWheel(){
+    renderWheelPrizes();
+    updateWheelState();
+}
+
+function renderWheelPrizes(){
+    const el = document.getElementById("wheelPrizeList");
+    if(!el) return;
+    el.innerHTML = wheelSegments.map(s => `
+        <div class="wheel-prize-item">
+            <span class="wheel-prize-icon">${s.icon}</span>
+            <span>${s.text}</span>
+        </div>`).join("");
+}
+
+function updateWheelState(){
+    const today = new Date().toISOString().slice(0,10);
+    const lastSpin = loadData("wheelDate");
+    const used = lastSpin === today;
+    const btn = document.getElementById("wheelSpinBtn");
+    const badge = document.getElementById("wheelBadge");
+    if(btn) btn.disabled = used;
+    if(badge) badge.style.display = used ? "none" : "inline";
+    const timer = document.getElementById("wheelTimer");
+    if(timer && used){
+        const now = new Date();
+        const midnight = new Date(now);
+        midnight.setHours(24,0,0,0);
+        const diff = midnight - now;
+        const h = Math.floor(diff/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        timer.textContent = `Nächste Drehung in ${h}h ${m}m`;
+    } else if(timer){
+        timer.textContent = "";
+    }
+}
+
+function spinWheel(){
+    const today = new Date().toISOString().slice(0,10);
+    if(loadData("wheelDate") === today || wheelSpinning) return;
+    wheelSpinning = true;
+
+    const idx = Math.floor(Math.random() * wheelSegments.length);
+    const spins = (Math.floor(Math.random()*4)+6) * 360;
+    const target = spins + (360 - idx * SEG - SEG/2);
+    wheelRotation += target;
+
+    const wheel = document.getElementById("spinWheel");
+    wheel.style.transition = "transform 4s cubic-bezier(.17,.67,.12,1)";
+    wheel.style.transform = `rotate(${wheelRotation}deg)`;
+
+    setTimeout(() => {
+        wheelSpinning = false;
+        saveData("wheelDate", today);
+        updateWheelState();
+        giveWheelPrize(wheelSegments[idx]);
+    }, 4200);
+}
+
+function giveWheelPrize(seg){
+    if(seg.coins){ coins += seg.coins; saveData("coins", coins); }
+    if(seg.gems){ gems += seg.gems; saveData("gems", gems); }
+    if(seg.pack){
+        const pool = players.filter(p => p.rarity === seg.pack);
+        if(pool.length){
+            const p = pool[Math.floor(Math.random()*pool.length)];
+            club.push(p);
+            saveData("club", JSON.stringify(club));
+        }
+    }
+    updateCurrency();
+    pushNotif("🎰","Glücksrad: " + seg.text + " gewonnen!");
+    checkAllAchievements();
+    const res = document.getElementById("wheelResult");
+    if(res){
+        res.style.display = "block";
+        res.innerHTML = `
+        <div class="wheel-result-icon">${seg.icon}</div>
+        <div class="wheel-result-text">${seg.text}</div>
+        <div class="wheel-result-sub">Gewonnen! 🎉</div>`;
+    }
+}
+
+// ======================
+// LOGIN STREAK
+// ======================
+
+const streakRewards = [
+    { day:1, icon:"🪙", label:"5.000 Coins",   coins:5000,  gems:0,   pack:null },
+    { day:2, icon:"🪙", label:"10.000 Coins",  coins:10000, gems:0,   pack:null },
+    { day:3, icon:"💎", label:"500 Gems",       coins:0,     gems:500, pack:null },
+    { day:4, icon:"🪙", label:"25.000 Coins",  coins:25000, gems:0,   pack:null },
+    { day:5, icon:"💎", label:"1.000 Gems",     coins:0,     gems:1000,pack:null },
+    { day:6, icon:"🪙", label:"50.000 Coins",  coins:50000, gems:0,   pack:null },
+    { day:7, icon:"👑", label:"TOTY Pack!",     coins:0,     gems:0,   pack:"toty" },
+];
+
+function checkLoginStreak(){
+    const today = new Date().toISOString().slice(0,10);
+    const data = JSON.parse(loadData("streak") || "{}");
+    if(data.lastLogin === today) return;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate()-1);
+    const yStr = yesterday.toISOString().slice(0,10);
+
+    if(data.lastLogin === yStr){
+        data.current = Math.min((data.current||0)+1, 7);
+    } else {
+        data.current = 1;
+    }
+    data.lastLogin = today;
+    data.claimed = false;
+    saveData("streak", JSON.stringify(data));
+    showStreakModal(data);
+}
+
+function showStreakModal(data){
+    const modal = document.getElementById("streakModal");
+    if(!modal) return;
+    const day = data.current;
+    document.getElementById("streakSubtitle").textContent = `Tag ${day} von 7`;
+    const grid = document.getElementById("streakGrid");
+    grid.innerHTML = streakRewards.map(r => {
+        const past    = r.day < day;
+        const current = r.day === day;
+        const future  = r.day > day;
+        return `
+        <div class="streak-day ${past?"streak-past":""} ${current?"streak-current":""} ${future?"streak-future":""}">
+            <div class="streak-day-num">Tag ${r.day}</div>
+            <div class="streak-day-icon">${r.icon}</div>
+            <div class="streak-day-label">${r.label}</div>
+            ${past ? '<div class="streak-check">✔</div>' : ""}
+        </div>`;
+    }).join("");
+    modal.style.display = "flex";
+}
+
+function claimStreak(){
+    const data = JSON.parse(loadData("streak") || "{}");
+    if(data.claimed) return;
+    const reward = streakRewards.find(r => r.day === data.current);
+    if(!reward) return;
+    data.claimed = true;
+    saveData("streak", JSON.stringify(data));
+    if(reward.coins){ coins += reward.coins; saveData("coins", coins); }
+    if(reward.gems){ gems += reward.gems; saveData("gems", gems); }
+    if(reward.pack){
+        const pool = players.filter(p => p.rarity === reward.pack);
+        if(pool.length){
+            const p = pool[Math.floor(Math.random()*pool.length)];
+            club.push(p);
+            saveData("club", JSON.stringify(club));
+        }
+    }
+    updateCurrency();
+    pushNotif("📅","Login-Streak Tag " + data.current + ": " + reward.label + " erhalten!");
+    document.getElementById("streakModal").style.display = "none";
+    if(data.current === 7) checkAchievement("streak_7");
+}
+
+function closeStreakModal(e){
+    if(e.target === e.currentTarget)
+        document.getElementById("streakModal").style.display = "none";
+}
+
+// ======================
 // TRANSFER TICKER
 // ======================
 
@@ -543,6 +770,9 @@ const achieveDefs = [
     { id:"quest_master", icon:"🎯", name:"Aufgaben-Meister", desc:"Eine tägliche Aufgabe abschließen",   check: ()=> { const d=getQuestData(); return Object.keys(d.claimed||{}).length>=1; } },
     { id:"fifty_cards",  icon:"🗂️", name:"Großer Kader",     desc:"50 Spieler im Verein",                check: ()=> club.length >= 50 },
     { id:"pack_addict",  icon:"📦", name:"Pack-Junkie",       desc:"100 Packs öffnen",                    check: ()=> parseInt(loadData("packsOpened")||0) >= 100 },
+    { id:"streak_7",     icon:"🔥", name:"7-Tage-Streak",     desc:"7 Tage hintereinander einloggen",     check: ()=> { const d=JSON.parse(loadData("streak")||"{}"); return d.current>=7 && d.claimed; } },
+    { id:"wheel_lucky",  icon:"🎰", name:"Glückspilz",        desc:"Das Glücksrad drehen",                check: ()=> !!loadData("wheelDate") },
+    { id:"elite_rank",   icon:"👑", name:"Elite-Spieler",     desc:"Den Elite-Rang erreichen",            check: ()=> parseInt(loadData("wins")||0) >= 60 },
 ];
 
 function getUnlockedAchievements(){
@@ -1578,6 +1808,8 @@ function openPage(page){
     if(page === "training") loadTraining();
     if(page === "quests") loadQuests();
     if(page === "achievements") loadAchievements();
+    if(page === "wheel") loadWheel();
+    if(page === "home") updateRankBanner();
 
 }
 

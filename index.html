@@ -183,6 +183,13 @@
 
     <button
     class="nav-btn"
+    onclick="openPage('wheel')">
+    🎰 Glücksrad
+    <span id="wheelBadge" class="quest-badge" style="display:none">1</span>
+    </button>
+
+    <button
+    class="nav-btn"
     onclick="openPage('training')">
     🏋️ Trainingsplan
     </button>
@@ -293,6 +300,8 @@
             <p>Baue dein Traumteam.</p>
 
         </div>
+
+        <div id="rankBanner" class="rank-banner"></div>
 
         <h2 class="stats-heading">
             📊 Meine Statistiken
@@ -494,6 +503,21 @@
     </div>
 
     <!-- FEHLER MODAL -->
+
+    <!-- LOGIN STREAK MODAL -->
+    <div id="streakModal" class="modal-overlay" onclick="closeStreakModal(event)">
+        <div class="modal-box streak-modal-box">
+            <div class="streak-header">
+                <div class="streak-fire">🔥</div>
+                <div>
+                    <div class="streak-title">Täglicher Login</div>
+                    <div class="streak-sub" id="streakSubtitle">Tag 1 von 7</div>
+                </div>
+            </div>
+            <div class="streak-grid" id="streakGrid"></div>
+            <button class="streak-claim-btn" id="streakClaimBtn" onclick="claimStreak()">Belohnung abholen</button>
+        </div>
+    </div>
 
     <div id="reportModal" class="modal-overlay"
     onclick="closeReport(event)">
@@ -823,6 +847,35 @@
 
         </div>
 
+    </div>
+
+    <!-- GLÜCKSRAD -->
+    <div id="wheel" class="page">
+        <h1 class="settings-title">🎰 Glücksrad</h1>
+        <p style="opacity:.45;font-size:13px;margin-bottom:32px">Einmal täglich drehen — viel Glück!</p>
+        <div class="wheel-layout">
+            <div class="wheel-container">
+                <div class="wheel-pointer">▼</div>
+                <div class="spin-wheel" id="spinWheel">
+                    <div class="wheel-label" style="--i:0">🪙 10K</div>
+                    <div class="wheel-label" style="--i:1">🪙 50K</div>
+                    <div class="wheel-label" style="--i:2">💎 500</div>
+                    <div class="wheel-label" style="--i:3">📦 Pack</div>
+                    <div class="wheel-label" style="--i:4">🪙 100K</div>
+                    <div class="wheel-label" style="--i:5">👑 TOTY</div>
+                    <div class="wheel-label" style="--i:6">💎 2000</div>
+                </div>
+            </div>
+            <div class="wheel-side">
+                <div id="wheelResult" class="wheel-result" style="display:none"></div>
+                <button class="wheel-spin-btn" id="wheelSpinBtn" onclick="spinWheel()">🎰 Drehen!</button>
+                <div id="wheelTimer" class="wheel-timer"></div>
+                <div class="wheel-prizes">
+                    <div class="wheel-prizes-title">Mögliche Preise</div>
+                    <div class="wheel-prize-list" id="wheelPrizeList"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- TÄGLICHE AUFGABEN -->

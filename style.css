@@ -1571,6 +1571,349 @@ body{
     letter-spacing:1px;
 }
 
+/* ══════════════════════════════════════════════
+   SAISON-RANG BANNER (Home)
+══════════════════════════════════════════════ */
+
+.rank-banner{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    background:linear-gradient(135deg,rgba(10,8,0,.75),rgba(30,20,0,.6));
+    border:1px solid rgba(255,215,0,.2);
+    border-radius:20px;
+    padding:20px 28px;
+    margin:0 0 28px;
+    max-width:520px;
+    transition:border-color .4s, box-shadow .4s;
+}
+.rank-tier-icon{
+    font-size:44px;
+    flex-shrink:0;
+    filter:drop-shadow(0 0 12px currentColor);
+}
+.rank-info{ flex:1; }
+.rank-tier-name{
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:8px;
+}
+.rank-progress-bar{
+    height:8px;
+    background:rgba(255,255,255,.08);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:5px;
+}
+.rank-fill{
+    height:100%;
+    border-radius:4px;
+    transition:width .6s cubic-bezier(.34,1.56,.64,1);
+}
+.rank-prog-text{
+    font-size:11px;
+    opacity:.45;
+    font-weight:500;
+}
+.rank-wins-count{
+    font-size:36px;
+    font-weight:900;
+    flex-shrink:0;
+    line-height:1;
+    text-shadow:0 0 20px currentColor;
+}
+.rank-wins-count span{
+    font-size:16px;
+    opacity:.6;
+    margin-left:2px;
+}
+
+/* ══════════════════════════════════════════════
+   GLÜCKSRAD
+══════════════════════════════════════════════ */
+
+.wheel-layout{
+    display:flex;
+    gap:48px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+}
+
+.wheel-container{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0;
+}
+
+.wheel-pointer{
+    font-size:32px;
+    color:#ffd700;
+    text-shadow:0 0 20px rgba(255,215,0,.8);
+    z-index:10;
+    margin-bottom:-10px;
+    position:relative;
+    animation:pointerPulse 1.5s ease-in-out infinite;
+}
+@keyframes pointerPulse{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-4px); }
+}
+
+.spin-wheel{
+    width:280px;
+    height:280px;
+    border-radius:50%;
+    background:conic-gradient(
+        #cc2200   0deg   51.4deg,
+        #cc6600  51.4deg 102.8deg,
+        #aa9900 102.8deg 154.2deg,
+        #007733 154.2deg 205.7deg,
+        #0055cc 205.7deg 257.1deg,
+        #6600cc 257.1deg 308.5deg,
+        #cc0077 308.5deg 360deg
+    );
+    border:6px solid rgba(255,215,0,.6);
+    box-shadow:
+        0 0 0 2px rgba(255,215,0,.2),
+        0 0 60px rgba(255,150,0,.3),
+        inset 0 0 40px rgba(0,0,0,.4);
+    position:relative;
+    cursor:pointer;
+    transition:transform 4s cubic-bezier(.17,.67,.12,1);
+}
+.spin-wheel::after{
+    content:"";
+    position:absolute;
+    top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    width:44px; height:44px;
+    border-radius:50%;
+    background:radial-gradient(circle,#fff 0%,#ffd700 60%,#ff8800 100%);
+    box-shadow:0 0 20px rgba(255,200,0,.8);
+    z-index:5;
+}
+
+.wheel-label{
+    position:absolute;
+    width:100%;
+    height:100%;
+    top:0; left:0;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding-top:18px;
+    font-size:11px;
+    font-weight:800;
+    color:white;
+    text-shadow:0 1px 3px rgba(0,0,0,.7);
+    transform:rotate(calc(var(--i) * 51.4deg + 25.7deg));
+    transform-origin:center center;
+    pointer-events:none;
+    letter-spacing:.5px;
+}
+
+.wheel-side{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+    min-width:220px;
+}
+
+.wheel-result{
+    background:linear-gradient(135deg,rgba(20,12,0,.9),rgba(50,30,0,.8));
+    border:1px solid rgba(255,200,0,.4);
+    border-radius:20px;
+    padding:24px;
+    text-align:center;
+    animation:resultPop .4s cubic-bezier(.22,1,.36,1);
+}
+@keyframes resultPop{
+    from{ transform:scale(.8); opacity:0; }
+    to{   transform:scale(1);  opacity:1; }
+}
+.wheel-result-icon{ font-size:42px; margin-bottom:8px; }
+.wheel-result-text{ font-size:20px; font-weight:900; color:#ffd700; }
+.wheel-result-sub{ font-size:13px; opacity:.5; margin-top:4px; }
+
+.wheel-spin-btn{
+    padding:16px 32px;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(135deg,#cc8800,#ffcc00,#ffaa00);
+    color:#000;
+    font-weight:900;
+    font-size:18px;
+    cursor:pointer;
+    box-shadow:0 0 30px rgba(255,180,0,.5);
+    transition:transform .15s, box-shadow .15s;
+    position:relative;
+    overflow:hidden;
+}
+.wheel-spin-btn::before{
+    content:"";
+    position:absolute;
+    top:-50%; left:-60%;
+    width:50%; height:200%;
+    background:rgba(255,255,255,.35);
+    transform:skewX(-20deg);
+    animation:claimShimmer 2s ease-in-out infinite;
+}
+.wheel-spin-btn:hover:not(:disabled){
+    transform:scale(1.05);
+    box-shadow:0 0 50px rgba(255,180,0,.7);
+}
+.wheel-spin-btn:disabled{
+    opacity:.35;
+    cursor:default;
+    background:#444;
+    box-shadow:none;
+}
+.wheel-spin-btn:disabled::before{ display:none; }
+
+.wheel-timer{
+    font-size:12px;
+    opacity:.45;
+    text-align:center;
+}
+
+.wheel-prizes{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;
+    padding:16px;
+}
+.wheel-prizes-title{
+    font-size:11px;
+    opacity:.4;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:10px;
+    font-weight:700;
+}
+.wheel-prize-list{ display:flex; flex-direction:column; gap:6px; }
+.wheel-prize-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    opacity:.7;
+}
+.wheel-prize-icon{ font-size:16px; }
+
+/* ══════════════════════════════════════════════
+   LOGIN STREAK MODAL
+══════════════════════════════════════════════ */
+
+.streak-modal-box{
+    max-width:600px;
+    width:96%;
+    padding:36px;
+}
+
+.streak-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:28px;
+}
+.streak-fire{
+    font-size:44px;
+    animation:firePulse 1s ease-in-out infinite;
+}
+@keyframes firePulse{
+    0%,100%{ transform:scale(1) rotate(-3deg); }
+    50%{ transform:scale(1.1) rotate(3deg); }
+}
+.streak-title{
+    font-size:24px;
+    font-weight:900;
+    color:white;
+}
+.streak-sub{
+    font-size:13px;
+    color:#ff9800;
+    font-weight:600;
+    margin-top:2px;
+}
+
+.streak-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:8px;
+    margin-bottom:24px;
+}
+
+.streak-day{
+    border-radius:14px;
+    padding:12px 6px;
+    text-align:center;
+    position:relative;
+    transition:.2s;
+}
+.streak-past{
+    background:linear-gradient(135deg,rgba(0,180,80,.15),rgba(0,120,60,.1));
+    border:1px solid rgba(0,200,80,.3);
+    opacity:.7;
+}
+.streak-current{
+    background:linear-gradient(135deg,rgba(255,150,0,.25),rgba(255,80,0,.15));
+    border:2px solid #ff9800;
+    box-shadow:0 0 20px rgba(255,150,0,.4);
+    transform:scale(1.05);
+}
+.streak-future{
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.08);
+    opacity:.4;
+}
+.streak-day-num{
+    font-size:9px;
+    opacity:.5;
+    letter-spacing:.5px;
+    margin-bottom:6px;
+    text-transform:uppercase;
+    font-weight:700;
+}
+.streak-day-icon{ font-size:22px; margin-bottom:4px; }
+.streak-day-label{ font-size:9px; font-weight:700; opacity:.7; line-height:1.2; }
+.streak-check{
+    position:absolute;
+    top:4px; right:6px;
+    color:#00e676;
+    font-size:11px;
+    font-weight:900;
+}
+
+.streak-claim-btn{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,#ff6600,#ff9800,#ffcc00);
+    color:#000;
+    font-size:17px;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow:0 0 30px rgba(255,150,0,.4);
+    transition:transform .15s;
+    position:relative;
+    overflow:hidden;
+}
+.streak-claim-btn::before{
+    content:"";
+    position:absolute;
+    top:-50%; left:-60%;
+    width:50%; height:200%;
+    background:rgba(255,255,255,.3);
+    transform:skewX(-20deg);
+    animation:claimShimmer 2s ease-in-out infinite;
+}
+.streak-claim-btn:hover{ transform:scale(1.02); }
+
 /* WM WERBUNG */
 
 .wm-ad{
