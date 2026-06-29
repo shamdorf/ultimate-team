@@ -104,6 +104,12 @@ function initGame(){
         document.body.classList.add("no-animations");
     if(localStorage.getItem("ut_ticker")==="off")
         applyTickerSetting(false);
+
+    // Admin-Button nur für loki einblenden
+    if(currentUser.name.toLowerCase() === "loki"){
+        const btn = document.getElementById("adminNavBtn");
+        if(btn) btn.style.display = "";
+    }
 }
 
 window.onload = () => {
@@ -1509,6 +1515,7 @@ function openPage(page){
     if(page === "quests") loadQuests();
     if(page === "achievements") loadAchievements();
     if(page === "home") updateRankBanner();
+    if(page === "admin"){ if(isAdmin()) loadAdminUsers(); else openPage("home"); }
 
 }
 
@@ -2823,5 +2830,134 @@ saveData("xp", xp);
 saveData("passLevel", passLevel);
 
 updatePass();
+
+// ============================================================
+// ADMIN PANEL
+// ============================================================
+
+const ADMIN_NAME = "loki";
+
+let adminAllUsers = [];  // gecachte User-Liste
+let adminEditKey  = null; // aktuell bearbeiteter Firebase-Key
+
+function isAdmin(){
+    return currentUser && currentUser.name.toLowerCase() === ADMIN_NAME;
+}
+
+function loadAdminUsers(){
+    if(!isAdmin()) return;
+    const body = document.getElementById("adminTableBody");
+    body.innerHTML = `<tr><td colspan="8" style="text-align:center;opacity:.5;padding:20px">⏳ Lade…</td></tr>`;
+
+    db.ref("accounts").once("value").then(snap => {
+        const raw = snap.val() || {};
+        adminAllUsers = Object.entries(raw).map(([key, val]) => ({ _key: key, ...val }));
+
+        // Global Stats
+        const totalCoins = adminAllUsers.reduce((s, u) => s + (u.coins || 0), 0);
+        document.getElementById("adminStatsGrid").innerHTML = `
+            <div class="admin-stat-card"><div class="admin-stat-val">${adminAllUsers.length}</div><div class="admin-stat-lbl">Spieler</div></div>
+            <div class="admin-stat-card"><div class="admin-stat-val">${adminAllUsers.filter(u=>u.vip==="1").length}</div><div class="admin-stat-lbl">VIPs</div></div>
+            <div class="admin-stat-card"><div class="admin-stat-val">${totalCoins.toLocaleString("de-DE")}</div><div class="admin-stat-lbl">Coins gesamt</div></div>
+            <div class="admin-stat-card"><div class="admin-stat-val">${adminAllUsers.reduce((s,u)=>s+(u.wins||0),0)}</div><div class="admin-stat-lbl">Siege gesamt</div></div>
+        `;
+
+        adminRenderTable(adminAllUsers);
+    });
+}
+
+function adminRenderTable(users){
+    const body = document.getElementById("adminTableBody");
+    if(users.length === 0){
+        body.innerHTML = `<tr><td colspan="8" style="text-align:center;opacity:.5;padding:20px">Keine Spieler gefunden</td></tr>`;
+        return;
+    }
+    body.innerHTML = users.map(u => {
+        const isSelf = u._key === encodeEmail(currentUser.email);
+        return `<tr class="${isSelf ? "admin-self-row" : ""}">
+            <td><strong>${u.name || "—"}</strong>${isSelf ? ' <span class="admin-you-tag">Du</span>' : ""}</td>
+            <td style="font-size:11px;opacity:.6">${decodeEmail(u._key)}</td>
+            <td>${(u.coins||0).toLocaleString("de-DE")}</td>
+            <td>${u.gems||0}</td>
+            <td>${u.wins||0}</td>
+            <td>${u.clubSize||0}</td>
+            <td>${u.vip==="1" ? "👑 Ja" : "—"}</td>
+            <td>
+                <button class="admin-btn admin-btn-edit" onclick="adminOpenEdit('${u._key}')">✏️ Bearbeiten</button>
+                ${!isSelf ? `<button class="admin-btn admin-btn-del" onclick="adminDeleteUser('${u._key}','${(u.name||"?").replace(/'/g,"\\'")}')">🗑️ Löschen</button>` : ""}
+                <button class="admin-btn admin-btn-coins" onclick="adminGiveCoins('${u._key}')">💰 Coins geben</button>
+            </td>
+        </tr>`;
+    }).join("");
+}
+
+function adminFilter(){
+    const q = document.getElementById("adminSearch").value.toLowerCase();
+    adminRenderTable(adminAllUsers.filter(u =>
+        (u.name||"").toLowerCase().includes(q) ||
+        decodeEmail(u._key).toLowerCase().includes(q)
+    ));
+}
+
+function adminOpenEdit(key){
+    if(!isAdmin()) return;
+    const u = adminAllUsers.find(u => u._key === key);
+    if(!u) return;
+    adminEditKey = key;
+    document.getElementById("adminEditTitle").textContent = "Bearbeiten: " + (u.name||key);
+    document.getElementById("aeCoins").value = u.coins || 0;
+    document.getElementById("aeGems").value  = u.gems  || 0;
+    document.getElementById("aeWins").value  = u.wins  || 0;
+    document.getElementById("aeXP").value    = u.xp    || 0;
+    document.getElementById("aeVip").value   = u.vip   || "0";
+    document.getElementById("aePass").value  = u.passLevel || 1;
+    document.getElementById("adminEditModal").style.display = "flex";
+}
+
+function adminSaveEdit(){
+    if(!isAdmin() || !adminEditKey) return;
+    const update = {
+        coins:     parseInt(document.getElementById("aeCoins").value) || 0,
+        gems:      parseInt(document.getElementById("aeGems").value)  || 0,
+        wins:      parseInt(document.getElementById("aeWins").value)  || 0,
+        xp:        parseInt(document.getElementById("aeXP").value)    || 0,
+        vip:       document.getElementById("aeVip").value,
+        passLevel: parseInt(document.getElementById("aePass").value)  || 1,
+    };
+    db.ref("accounts/" + adminEditKey).update(update).then(() => {
+        document.getElementById("adminEditModal").style.display = "none";
+        pushNotif("✅", "Spieler aktualisiert!");
+        loadAdminUsers();
+    });
+}
+
+function adminDeleteUser(key, name){
+    if(!isAdmin()) return;
+    if(!confirm(`Spieler "${name}" wirklich löschen?\nDies löscht den Account dauerhaft!`)) return;
+    db.ref("accounts/" + key).remove().then(() => {
+        pushNotif("🗑️", name + " wurde gelöscht.");
+        loadAdminUsers();
+    });
+}
+
+function adminGiveCoins(key){
+    if(!isAdmin()) return;
+    const amount = parseInt(prompt("Wie viele Coins vergeben?", "10000"));
+    if(!amount || isNaN(amount)) return;
+    db.ref("accounts/" + key + "/coins").transaction(c => (c||0) + amount).then(() => {
+        pushNotif("💰", amount.toLocaleString("de-DE") + " Coins vergeben!");
+        loadAdminUsers();
+    });
+}
+
+function adminBroadcast(){
+    if(!isAdmin()) return;
+    const msg = document.getElementById("adminBroadcast").value.trim();
+    if(!msg) return;
+    db.ref("broadcast").set({ msg, from: "Admin", ts: Date.now() }).then(() => {
+        document.getElementById("adminBroadcast").value = "";
+        pushNotif("📢", "Nachricht gesendet!");
+    });
+}
 
 }

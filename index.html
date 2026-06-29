@@ -193,6 +193,14 @@
     ⚙️ Einstellungen
     </button>
 
+    <button
+    id="adminNavBtn"
+    class="nav-btn nav-btn-admin"
+    onclick="openPage('admin')"
+    style="display:none">
+    🛡️ Admin Panel
+    </button>
+
     <div class="sidebar-reports">
         <div class="sidebar-reports-title">🐛 Fehlerberichte</div>
         <div id="sidebarReports">
@@ -1050,6 +1058,80 @@
 
     </div>
 
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin" class="page" style="display:none">
+    <div class="admin-header">
+        <div class="admin-logo">🛡️</div>
+        <div>
+            <h1 class="admin-title">Admin Panel</h1>
+            <div class="admin-sub">Nur für loki sichtbar</div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="admin-stats-grid" id="adminStatsGrid"></div>
+
+    <!-- Suche -->
+    <div class="admin-search-row">
+        <input id="adminSearch" class="admin-input" placeholder="🔍 Spieler suchen…" oninput="adminFilter()">
+        <button class="admin-refresh-btn" onclick="loadAdminUsers()">🔄 Aktualisieren</button>
+    </div>
+
+    <!-- Usertabelle -->
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>E-Mail</th>
+                    <th>Coins</th>
+                    <th>Gems</th>
+                    <th>Siege</th>
+                    <th>Vereinsgröße</th>
+                    <th>VIP</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="adminEditModal" class="admin-modal" style="display:none">
+        <div class="admin-modal-box">
+            <h2 class="admin-modal-title" id="adminEditTitle">Spieler bearbeiten</h2>
+            <div class="admin-form-grid">
+                <label>Coins</label>
+                <input id="aeCoins" class="admin-input" type="number">
+                <label>Gems</label>
+                <input id="aeGems"  class="admin-input" type="number">
+                <label>Siege</label>
+                <input id="aeWins"  class="admin-input" type="number">
+                <label>XP</label>
+                <input id="aeXP"    class="admin-input" type="number">
+                <label>VIP</label>
+                <select id="aeVip" class="admin-input">
+                    <option value="0">Nein</option>
+                    <option value="1">Ja</option>
+                </select>
+                <label>Pass Level</label>
+                <input id="aePass" class="admin-input" type="number">
+            </div>
+            <div class="admin-modal-btns">
+                <button class="admin-btn admin-btn-save" onclick="adminSaveEdit()">💾 Speichern</button>
+                <button class="admin-btn admin-btn-cancel" onclick="document.getElementById('adminEditModal').style.display='none'">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Broadcast -->
+    <div class="admin-section-title">📢 Nachricht an alle senden</div>
+    <div class="admin-broadcast-row">
+        <input id="adminBroadcast" class="admin-input" placeholder="Nachricht eingeben…" style="flex:1">
+        <button class="admin-btn admin-btn-save" onclick="adminBroadcast()">Senden</button>
+    </div>
 </div>
 
 <!-- Firebase CDN -->
