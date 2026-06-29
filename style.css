@@ -759,74 +759,226 @@ body{
     margin-top:25px;
 }
 
-/* CARD */
+/* ══════════════════════════════════════════════
+   FIFA CARD
+══════════════════════════════════════════════ */
 
-.club-card{
-
-    width:200px;
-    height:280px;
-
-    border-radius:20px;
-
-    text-align:center;
-
-    padding-top:20px;
-
-    transition:.3s;
-
+.fifa-card{
+    width:185px;
+    min-height:270px;
+    border-radius:14px;
+    position:relative;
     display:flex;
-
     flex-direction:column;
+    overflow:hidden;
+    flex-shrink:0;
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+    cursor:default;
+}
+.fifa-card:hover{
+    transform:translateY(-10px) scale(1.04);
+    z-index:10;
+}
 
+/* Glanz-Overlay */
+.fc-bg-shine{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+        135deg,
+        rgba(255,255,255,.18) 0%,
+        transparent 50%,
+        rgba(0,0,0,.2) 100%
+    );
+    pointer-events:none;
+    z-index:1;
+}
+
+/* Rarity-Hintergründe */
+.fc-bronze{
+    background:linear-gradient(160deg,#3d1a06 0%,#7a3a10 35%,#c07840 65%,#e8a060 100%);
+    border:1px solid #c07840;
+    box-shadow:0 6px 28px rgba(192,120,64,.45);
+    color:#fff0d8;
+}
+.fc-silver{
+    background:linear-gradient(160deg,#1c1c1c 0%,#555 40%,#aaa 70%,#e0e0e0 100%);
+    border:1px solid #aaa;
+    box-shadow:0 6px 28px rgba(160,160,160,.4);
+    color:#f0f0f0;
+}
+.fc-gold{
+    background:linear-gradient(160deg,#1e1000 0%,#6b4400 30%,#c89400 60%,#ffe560 90%,#fff4a0 100%);
+    border:1px solid #d4a800;
+    box-shadow:0 6px 30px rgba(212,168,0,.55);
+    color:#fff8d0;
+}
+.fc-tots{
+    background:linear-gradient(160deg,#0a0018 0%,#44009a 35%,#aa00ff 65%,#ff66ff 100%);
+    border:1px solid #cc44ff;
+    box-shadow:0 6px 40px rgba(180,0,255,.65);
+    color:#ffe0ff;
+    animation:totsGlitter 2s ease-in-out infinite;
+}
+.fc-toty{
+    background:linear-gradient(160deg,#000616 0%,#001a6e 30%,#0044dd 60%,#00b8ff 85%,#80e8ff 100%);
+    border:1px solid #00aaff;
+    box-shadow:0 6px 50px rgba(0,170,255,.7);
+    color:#d0f4ff;
+    animation:totyShimmer 1.6s ease-in-out infinite;
+}
+
+/* === TOP BEREICH === */
+.fc-top{
+    display:flex;
+    align-items:flex-start;
+    padding:10px 10px 0;
+    gap:6px;
+    position:relative;
+    z-index:2;
+}
+.fc-left{
+    display:flex;
+    flex-direction:column;
     align-items:center;
+    gap:1px;
+    flex-shrink:0;
+}
+.fc-rating{
+    font-size:30px;
+    font-weight:900;
+    line-height:1;
+    text-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+.fc-pos{
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:1px;
+    opacity:.85;
+    text-shadow:0 1px 3px rgba(0,0,0,.4);
+}
+.fc-flag{
+    font-size:13px;
+    margin-top:4px;
+}
+.fc-badge{
+    font-size:13px;
+    margin-top:1px;
+    opacity:.7;
 }
 
-.club-card .player-rating{
-
-    font-size:48px;
+/* === FOTO === */
+.fc-photo-area{
+    flex:1;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    height:108px;
+    overflow:hidden;
+    position:relative;
+}
+.fc-photo-img{
+    height:110px;
+    width:auto;
+    object-fit:contain;
+    object-position:bottom;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.6));
+}
+.fc-photo-silhouette{
+    font-size:64px;
+    opacity:.35;
+    line-height:1;
+    padding-bottom:4px;
 }
 
-.club-card .player-name{
-
-    margin-top:8px;
-
-    font-size:20px;
+/* === DIVIDER & NAME === */
+.fc-divider{
+    height:1px;
+    background:rgba(255,255,255,.2);
+    margin:6px 10px 4px;
+    position:relative;
+    z-index:2;
 }
- 
-
-.club-card:hover{
-
-    transform:
-    translateY(-8px);
+.fc-name{
+    text-align:center;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:0 6px 4px;
+    position:relative;
+    z-index:2;
+    text-shadow:0 1px 4px rgba(0,0,0,.5);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
 }
 
-/* BUTTONS */
+/* === STATS === */
+.fc-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    grid-template-rows:1fr 1fr;
+    gap:1px 8px;
+    padding:4px 10px 8px;
+    background:rgba(0,0,0,.2);
+    position:relative;
+    z-index:2;
+}
+.fc-stat{
+    display:flex;
+    align-items:center;
+    gap:3px;
+}
+.fc-sv{
+    font-size:11px;
+    font-weight:900;
+    line-height:1;
+}
+.fc-sk{
+    font-size:8px;
+    font-weight:700;
+    opacity:.65;
+    letter-spacing:.3px;
+}
 
-.sell-btn,
-.buy-btn{
-
-    margin-top:10px;
-
-    padding:10px 15px;
-
+/* === BUTTONS === */
+.fc-buttons{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    padding:6px 8px 10px;
+    background:rgba(0,0,0,.25);
+    position:relative;
+    z-index:2;
+}
+.fc-btn{
+    padding:7px 10px;
     border:none;
-
-    border-radius:10px;
-
+    border-radius:8px;
+    font-size:11px;
+    font-weight:700;
     cursor:pointer;
-
     color:white;
+    transition:.15s;
+    text-align:center;
+}
+.fc-btn:hover{ opacity:.85; transform:scale(.98); }
+.fc-btn-sell  { background:linear-gradient(135deg,#00802b,#00e676); }
+.fc-btn-offer { background:linear-gradient(135deg,#7b00ff,#cc44ff); }
+.fc-btn-team  { background:linear-gradient(135deg,#003fcc,#0088ff); }
+
+.fc-market-seller{
+    font-size:10px;
+    opacity:.5;
+    text-align:center;
+    padding:2px 0;
 }
 
-.sell-btn{
-
-    background:#00c853;
-}
-
-.buy-btn{
-
-    background:#1565ff;
-}
+/* Rückwärtskompatibilität (alte Klassen falls noch genutzt) */
+.sell-btn{ padding:8px 14px;border:none;border-radius:9px;cursor:pointer;color:white;background:#00c853;margin-top:6px; }
+.buy-btn{  padding:8px 14px;border:none;border-radius:9px;cursor:pointer;color:white;background:#1565ff;margin-top:6px; }
+.offer-btn{padding:8px 14px;border:none;border-radius:9px;cursor:pointer;color:white;background:#7b00ff;margin-top:6px; }
 
 /* TEAM OVR */
 

@@ -2085,12 +2085,81 @@ const players = [
 ];
 
 // ======================
-// SPIELERBILD
+// FIFA KARTE
 // ======================
 
 function playerImg(player){
     if(!player.img) return '';
     return `<img class="card-img" src="${player.img}" alt="${player.name}">`;
+}
+
+// Deterministischer Hash für konsistente Stats/Position
+function strHash(str){
+    let h = 0;
+    for(let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+    return Math.abs(h);
+}
+
+function getPlayerStats(player){
+    const r  = player.rating;
+    const h  = strHash(player.name);
+    const s  = (seed, spread=14) => Math.min(99, Math.max(40, r - 6 + (seed % spread)));
+    return {
+        pac: s(h & 0xf),
+        sho: s((h >> 4) & 0xf),
+        pas: s((h >> 8) & 0xf),
+        dri: s((h >> 12) & 0xf),
+        def: s(h % 11),
+        phy: s((h * 7) % 14),
+    };
+}
+
+const POS_POOL = ["ST","CF","CAM","CM","CDM","LW","RW","LM","RM","CB","LB","RB","GK"];
+const FLAGS    = ["🇩🇪","🇧🇷","🇫🇷","🇪🇸","🇵🇹","🇦🇷","🇬🇧","🇮🇹","🇳🇱","🇧🇪","🇭🇷","🇸🇳","🇨🇲","🇲🇦","🇯🇵","🇺🇸","🇵🇱","🇸🇪","🇩🇰","🇺🇦"];
+
+function getPlayerPos(player){
+    const h = strHash(player.name);
+    if(player.rarity === "toty" || player.rarity === "tots")
+        return ["ST","CF","CAM","CM","LW","RW","SS"][h % 7];
+    return POS_POOL[h % POS_POOL.length];
+}
+function getPlayerFlag(player){
+    return FLAGS[strHash(player.name) % FLAGS.length];
+}
+
+// Haupt-Render-Funktion für alle Spielerkarten
+function fifaCard(player, buttons = ""){
+    const st   = getPlayerStats(player);
+    const pos  = player.position || getPlayerPos(player);
+    const flag = getPlayerFlag(player);
+    const img  = player.img
+        ? `<img class="fc-photo-img" src="${player.img}" alt="${player.name}">`
+        : `<div class="fc-photo-silhouette">👤</div>`;
+
+    return `
+    <div class="fifa-card fc-${player.rarity}">
+        <div class="fc-bg-shine"></div>
+        <div class="fc-top">
+            <div class="fc-left">
+                <div class="fc-rating">${player.rating}</div>
+                <div class="fc-pos">${pos}</div>
+                <div class="fc-flag">${flag}</div>
+                <div class="fc-badge">⚽</div>
+            </div>
+            <div class="fc-photo-area">${img}</div>
+        </div>
+        <div class="fc-divider"></div>
+        <div class="fc-name">${player.name}</div>
+        <div class="fc-stats">
+            <div class="fc-stat"><span class="fc-sv">${st.pac}</span><span class="fc-sk">PAC</span></div>
+            <div class="fc-stat"><span class="fc-sv">${st.dri}</span><span class="fc-sk">DRI</span></div>
+            <div class="fc-stat"><span class="fc-sv">${st.sho}</span><span class="fc-sk">SHO</span></div>
+            <div class="fc-stat"><span class="fc-sv">${st.def}</span><span class="fc-sk">DEF</span></div>
+            <div class="fc-stat"><span class="fc-sv">${st.pas}</span><span class="fc-sk">PAS</span></div>
+            <div class="fc-stat"><span class="fc-sv">${st.phy}</span><span class="fc-sk">PHY</span></div>
+        </div>
+        ${buttons ? `<div class="fc-buttons">${buttons}</div>` : ""}
+    </div>`;
 }
 
 // ======================
@@ -2173,21 +2242,14 @@ function openPack(type){
         cardEl.style.display = "flex";
         cardEl.innerHTML = `
         <div class="pack-card-reveal-wrap">
-            <div class="player-card ${player.rarity} ${player.img?"has-img":""} pack-card-flip">
-                <div class="player-rating">${player.rating}</div>
-                ${playerImg(player)}
-                <div class="player-name">${player.name}</div>
-                <div class="pack-rarity-badge">${player.rarity.toUpperCase()}</div>
+            <div class="pack-card-flip">
+                ${fifaCard(player)}
             </div>
             <div class="pack-reveal-info">
                 <div class="pack-reveal-congrats">Neuer Spieler!</div>
                 <div class="pack-reveal-pname">${player.name}</div>
-                <div class="pack-reveal-rating" style="color:${meta.color}">
-                    ★ ${player.rating}
-                </div>
-                <button class="pack-reveal-done" onclick="closePackOverlay()">
-                    Weiter
-                </button>
+                <div class="pack-reveal-rating" style="color:${meta.color}">★ ${player.rating}</div>
+                <button class="pack-reveal-done" onclick="closePackOverlay()">Weiter</button>
             </div>
         </div>`;
 
@@ -2237,48 +2299,12 @@ document.getElementById(
 
 container.innerHTML = "";
 
-club.forEach((player,index)=>{
-
-container.innerHTML += `
-
-<div class="club-card ${player.rarity} ${player.img ? 'has-img' : ''}">
-
-    <div class="player-rating">
-        ${player.rating}
-    </div>
-
-    ${playerImg(player)}
-
-    <div class="player-name">
-        ${player.name}
-    </div>
-
-    <p>
-    💰 ${getSellPrice(player.rating)}
-    </p>
-
-    <button
-    class="sell-btn"
-    onclick="sellPlayer(${index})">
-    Verkaufen
-    </button>
-
-    <button
-    class="offer-btn"
-    onclick="openOfferModal(${index})">
-    🏪 Anbieten
-    </button>
-
-    <button
-    class="buy-btn"
-    onclick="addToTeam(${index})">
-    Team
-    </button>
-
-</div>
-
-`;
-
+club.forEach((player, index) => {
+    const btns = `
+        <button class="fc-btn fc-btn-sell"  onclick="sellPlayer(${index})">💰 Verkaufen</button>
+        <button class="fc-btn fc-btn-offer" onclick="openOfferModal(${index})">🏪 Anbieten</button>
+        <button class="fc-btn fc-btn-team"  onclick="addToTeam(${index})">➕ Team</button>`;
+    container.innerHTML += fifaCard(player, btns);
 });
 
 }
@@ -2487,16 +2513,10 @@ document.getElementById("shopItems");
 
 if(activeTab === "fix"){
 
-    players.forEach(player=>{
-        itemsEl.innerHTML += `
-        <div class="club-card ${player.rarity} ${player.img?"has-img":""}">
-            <div class="player-rating">${player.rating}</div>
-            ${playerImg(player)}
-            <div class="player-name">${player.name}</div>
-            <p>💰 ${player.price.toLocaleString("de-DE")}</p>
-            <button class="buy-btn"
-            onclick="buyPlayer('${player.name}')">Kaufen</button>
-        </div>`;
+    players.forEach(player => {
+        const btn = `<button class="fc-btn fc-btn-team" onclick="buyPlayer('${player.name.replace(/'/g,"\\'")}')">
+            💰 ${player.price.toLocaleString("de-DE")}</button>`;
+        itemsEl.innerHTML += fifaCard(player, btn);
     });
 
 } else {
@@ -2516,19 +2536,14 @@ function loadMarketplace(container){
         }
         container.innerHTML = "";
         listings.forEach(listing => {
-            const p = listing.player;
+            const p      = listing.player;
             const isMine = listing.sellerEmail === currentUser.email;
-            container.innerHTML += `
-            <div class="club-card ${p.rarity} ${p.img?"has-img":""}">
-                <div class="player-rating">${p.rating}</div>
-                ${playerImg(p)}
-                <div class="player-name">${p.name}</div>
-                <p style="font-size:12px;opacity:.6">von ${listing.sellerName}</p>
-                <p>💰 ${listing.price.toLocaleString("de-DE")}</p>
-                ${isMine
-                ? `<button class="sell-btn" onclick="removeFromMarket('${listing.fbKey}')">❌ Zurückziehen</button>`
-                : `<button class="buy-btn" onclick="buyFromMarket('${listing.fbKey}')">Kaufen</button>`}
-            </div>`;
+            const btn    = isMine
+                ? `<div class="fc-market-seller">von dir</div>
+                   <button class="fc-btn fc-btn-sell" onclick="removeFromMarket('${listing.fbKey}')">❌ Zurückziehen</button>`
+                : `<div class="fc-market-seller">von ${listing.sellerName}</div>
+                   <button class="fc-btn fc-btn-team" onclick="buyFromMarket('${listing.fbKey}')">💰 ${listing.price.toLocaleString("de-DE")}</button>`;
+            container.innerHTML += fifaCard(p, btn);
         });
     });
 }
