@@ -1062,75 +1062,79 @@
 
 <!-- ADMIN PANEL -->
 <div id="admin" class="page">
-    <div class="admin-header">
-        <div class="admin-logo">🛡️</div>
-        <div>
-            <h1 class="admin-title">Admin Panel</h1>
-            <div class="admin-sub">Nur für loki sichtbar</div>
+    <div class="admin-wrap">
+
+        <!-- Header -->
+        <div class="admin-header">
+            <div class="admin-logo">🛡️</div>
+            <div class="admin-header-text">
+                <h1 class="admin-title">Admin Panel</h1>
+                <div class="admin-sub">Eingeloggt als <strong>loki</strong> · Vollzugriff</div>
+            </div>
+            <button class="admin-refresh-btn" onclick="loadAdminUsers()">🔄 Aktualisieren</button>
         </div>
-    </div>
 
-    <!-- Stats -->
-    <div class="admin-stats-grid" id="adminStatsGrid"></div>
+        <!-- Stats Karten -->
+        <div class="admin-stats-grid" id="adminStatsGrid">
+            <div class="admin-stat-card"><div class="admin-stat-val">—</div><div class="admin-stat-lbl">Spieler</div></div>
+            <div class="admin-stat-card"><div class="admin-stat-val">—</div><div class="admin-stat-lbl">VIPs</div></div>
+            <div class="admin-stat-card"><div class="admin-stat-val">—</div><div class="admin-stat-lbl">Coins gesamt</div></div>
+            <div class="admin-stat-card"><div class="admin-stat-val">—</div><div class="admin-stat-lbl">Siege gesamt</div></div>
+        </div>
 
-    <!-- Suche -->
-    <div class="admin-search-row">
-        <input id="adminSearch" class="admin-input" placeholder="🔍 Spieler suchen…" oninput="adminFilter()">
-        <button class="admin-refresh-btn" onclick="loadAdminUsers()">🔄 Aktualisieren</button>
-    </div>
+        <!-- Suche -->
+        <div class="admin-search-row">
+            <div class="admin-search-wrap">
+                <span class="admin-search-icon">🔍</span>
+                <input id="adminSearch" class="admin-input admin-search-input" placeholder="Spieler nach Name oder E-Mail suchen…" oninput="adminFilter()">
+            </div>
+        </div>
 
-    <!-- Usertabelle -->
-    <div class="admin-table-wrap">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>E-Mail</th>
-                    <th>Coins</th>
-                    <th>Gems</th>
-                    <th>Siege</th>
-                    <th>Vereinsgröße</th>
-                    <th>VIP</th>
-                    <th>Aktionen</th>
-                </tr>
-            </thead>
-            <tbody id="adminTableBody"></tbody>
-        </table>
+        <!-- User-Karten -->
+        <div id="adminUserGrid" class="admin-user-grid">
+            <div class="admin-loading">⏳ Lade Spieler…</div>
+        </div>
+
+        <!-- Broadcast -->
+        <div class="admin-broadcast-box">
+            <div class="admin-section-title">📢 Nachricht an alle senden</div>
+            <div class="admin-broadcast-row">
+                <input id="adminBroadcast" class="admin-input" placeholder="Nachricht eingeben…">
+                <button class="admin-action-btn admin-btn-green" onclick="adminBroadcast()">📤 Senden</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Edit Modal -->
-    <div id="adminEditModal" class="admin-modal" style="display:none">
+    <div id="adminEditModal" class="admin-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
         <div class="admin-modal-box">
-            <h2 class="admin-modal-title" id="adminEditTitle">Spieler bearbeiten</h2>
+            <div class="admin-modal-header">
+                <h2 class="admin-modal-title" id="adminEditTitle">Spieler bearbeiten</h2>
+                <button class="admin-modal-close" onclick="document.getElementById('adminEditModal').style.display='none'">✕</button>
+            </div>
             <div class="admin-form-grid">
-                <label>Coins</label>
-                <input id="aeCoins" class="admin-input" type="number">
-                <label>Gems</label>
-                <input id="aeGems"  class="admin-input" type="number">
-                <label>Siege</label>
-                <input id="aeWins"  class="admin-input" type="number">
-                <label>XP</label>
-                <input id="aeXP"    class="admin-input" type="number">
-                <label>VIP</label>
+                <label>💰 Coins</label>
+                <input id="aeCoins" class="admin-input" type="number" min="0">
+                <label>💎 Gems</label>
+                <input id="aeGems"  class="admin-input" type="number" min="0">
+                <label>🏆 Siege</label>
+                <input id="aeWins"  class="admin-input" type="number" min="0">
+                <label>⭐ XP</label>
+                <input id="aeXP"    class="admin-input" type="number" min="0">
+                <label>👑 VIP</label>
                 <select id="aeVip" class="admin-input">
                     <option value="0">Nein</option>
-                    <option value="1">Ja</option>
+                    <option value="1">Ja – VIP aktiv</option>
                 </select>
-                <label>Pass Level</label>
-                <input id="aePass" class="admin-input" type="number">
+                <label>🎟️ Pass Lvl</label>
+                <input id="aePass" class="admin-input" type="number" min="1" max="100">
             </div>
             <div class="admin-modal-btns">
-                <button class="admin-btn admin-btn-save" onclick="adminSaveEdit()">💾 Speichern</button>
-                <button class="admin-btn admin-btn-cancel" onclick="document.getElementById('adminEditModal').style.display='none'">Abbrechen</button>
+                <button class="admin-action-btn admin-btn-green" onclick="adminSaveEdit()">💾 Speichern</button>
+                <button class="admin-action-btn admin-btn-gray"  onclick="document.getElementById('adminEditModal').style.display='none'">Abbrechen</button>
             </div>
         </div>
-    </div>
-
-    <!-- Broadcast -->
-    <div class="admin-section-title">📢 Nachricht an alle senden</div>
-    <div class="admin-broadcast-row">
-        <input id="adminBroadcast" class="admin-input" placeholder="Nachricht eingeben…" style="flex:1">
-        <button class="admin-btn admin-btn-save" onclick="adminBroadcast()">Senden</button>
     </div>
 </div>
 

@@ -2831,6 +2831,8 @@ saveData("passLevel", passLevel);
 
 updatePass();
 
+} // end addXP
+
 // ============================================================
 // ADMIN PANEL
 // ============================================================
@@ -2846,54 +2848,89 @@ function isAdmin(){
 
 function loadAdminUsers(){
     if(!isAdmin()) return;
-    const body = document.getElementById("adminTableBody");
-    body.innerHTML = `<tr><td colspan="8" style="text-align:center;opacity:.5;padding:20px">⏳ Lade…</td></tr>`;
+    const grid = document.getElementById("adminUserGrid");
+    grid.innerHTML = `<div class="admin-loading">⏳ Lade Spieler aus Firebase…</div>`;
 
     db.ref("accounts").once("value").then(snap => {
         const raw = snap.val() || {};
         adminAllUsers = Object.entries(raw).map(([key, val]) => ({ _key: key, ...val }));
 
-        // Global Stats
+        // Stats aktualisieren
         const totalCoins = adminAllUsers.reduce((s, u) => s + (u.coins || 0), 0);
+        const totalWins  = adminAllUsers.reduce((s, u) => s + (u.wins  || 0), 0);
+        const vipCount   = adminAllUsers.filter(u => u.vip === "1").length;
         document.getElementById("adminStatsGrid").innerHTML = `
-            <div class="admin-stat-card"><div class="admin-stat-val">${adminAllUsers.length}</div><div class="admin-stat-lbl">Spieler</div></div>
-            <div class="admin-stat-card"><div class="admin-stat-val">${adminAllUsers.filter(u=>u.vip==="1").length}</div><div class="admin-stat-lbl">VIPs</div></div>
-            <div class="admin-stat-card"><div class="admin-stat-val">${totalCoins.toLocaleString("de-DE")}</div><div class="admin-stat-lbl">Coins gesamt</div></div>
-            <div class="admin-stat-card"><div class="admin-stat-val">${adminAllUsers.reduce((s,u)=>s+(u.wins||0),0)}</div><div class="admin-stat-lbl">Siege gesamt</div></div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon">👥</div>
+                <div class="admin-stat-val">${adminAllUsers.length}</div>
+                <div class="admin-stat-lbl">Spieler</div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon">👑</div>
+                <div class="admin-stat-val">${vipCount}</div>
+                <div class="admin-stat-lbl">VIPs</div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon">💰</div>
+                <div class="admin-stat-val">${totalCoins.toLocaleString("de-DE")}</div>
+                <div class="admin-stat-lbl">Coins gesamt</div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-icon">🏆</div>
+                <div class="admin-stat-val">${totalWins}</div>
+                <div class="admin-stat-lbl">Siege gesamt</div>
+            </div>
         `;
 
-        adminRenderTable(adminAllUsers);
+        adminRenderGrid(adminAllUsers);
+    }).catch(err => {
+        grid.innerHTML = `<div class="admin-loading" style="color:#ff6666">❌ Fehler: ${err.message}</div>`;
     });
 }
 
-function adminRenderTable(users){
-    const body = document.getElementById("adminTableBody");
+function adminRenderGrid(users){
+    const grid = document.getElementById("adminUserGrid");
     if(users.length === 0){
-        body.innerHTML = `<tr><td colspan="8" style="text-align:center;opacity:.5;padding:20px">Keine Spieler gefunden</td></tr>`;
+        grid.innerHTML = `<div class="admin-loading">Keine Spieler gefunden.</div>`;
         return;
     }
-    body.innerHTML = users.map(u => {
-        const isSelf = u._key === encodeEmail(currentUser.email);
-        return `<tr class="${isSelf ? "admin-self-row" : ""}">
-            <td><strong>${u.name || "—"}</strong>${isSelf ? ' <span class="admin-you-tag">Du</span>' : ""}</td>
-            <td style="font-size:11px;opacity:.6">${decodeEmail(u._key)}</td>
-            <td>${(u.coins||0).toLocaleString("de-DE")}</td>
-            <td>${u.gems||0}</td>
-            <td>${u.wins||0}</td>
-            <td>${u.clubSize||0}</td>
-            <td>${u.vip==="1" ? "👑 Ja" : "—"}</td>
-            <td>
-                <button class="admin-btn admin-btn-edit" onclick="adminOpenEdit('${u._key}')">✏️ Bearbeiten</button>
-                ${!isSelf ? `<button class="admin-btn admin-btn-del" onclick="adminDeleteUser('${u._key}','${(u.name||"?").replace(/'/g,"\\'")}')">🗑️ Löschen</button>` : ""}
-                <button class="admin-btn admin-btn-coins" onclick="adminGiveCoins('${u._key}')">💰 Coins geben</button>
-            </td>
-        </tr>`;
+    grid.innerHTML = users.map(u => {
+        const isSelf  = u._key === encodeEmail(currentUser.email);
+        const email   = decodeEmail(u._key);
+        const nameEsc = (u.name||"?").replace(/'/g,"\\'");
+        return `
+        <div class="admin-user-card ${isSelf ? "admin-self" : ""}">
+            <div class="admin-user-top">
+                <div class="admin-user-avatar">${(u.name||"?")[0].toUpperCase()}</div>
+                <div class="admin-user-info">
+                    <div class="admin-user-name">
+                        ${u.name || "Unbekannt"}
+                        ${isSelf  ? '<span class="admin-tag admin-tag-you">Du</span>'  : ""}
+                        ${u.vip==="1" ? '<span class="admin-tag admin-tag-vip">👑 VIP</span>' : ""}
+                    </div>
+                    <div class="admin-user-email">${email}</div>
+                </div>
+            </div>
+            <div class="admin-user-stats">
+                <div class="admin-user-stat"><span class="aus-val">${(u.coins||0).toLocaleString("de-DE")}</span><span class="aus-lbl">💰 Coins</span></div>
+                <div class="admin-user-stat"><span class="aus-val">${u.gems||0}</span><span class="aus-lbl">💎 Gems</span></div>
+                <div class="admin-user-stat"><span class="aus-val">${u.wins||0}</span><span class="aus-lbl">🏆 Siege</span></div>
+                <div class="admin-user-stat"><span class="aus-val">${u.clubSize||0}</span><span class="aus-lbl">👥 Verein</span></div>
+                <div class="admin-user-stat"><span class="aus-val">${u.xp||0}</span><span class="aus-lbl">⭐ XP</span></div>
+                <div class="admin-user-stat"><span class="aus-val">${u.passLevel||1}</span><span class="aus-lbl">🎟️ Pass</span></div>
+            </div>
+            <div class="admin-user-actions">
+                <button class="admin-action-btn admin-btn-blue"  onclick="adminOpenEdit('${u._key}')">✏️ Bearbeiten</button>
+                <button class="admin-action-btn admin-btn-gold"  onclick="adminGiveCoins('${u._key}')">💰 Coins geben</button>
+                ${!isSelf ? `<button class="admin-action-btn admin-btn-red" onclick="adminDeleteUser('${u._key}','${nameEsc}')">🗑️ Löschen</button>` : ""}
+            </div>
+        </div>`;
     }).join("");
 }
 
 function adminFilter(){
     const q = document.getElementById("adminSearch").value.toLowerCase();
-    adminRenderTable(adminAllUsers.filter(u =>
+    adminRenderGrid(adminAllUsers.filter(u =>
         (u.name||"").toLowerCase().includes(q) ||
         decodeEmail(u._key).toLowerCase().includes(q)
     ));
@@ -2958,6 +2995,4 @@ function adminBroadcast(){
         document.getElementById("adminBroadcast").value = "";
         pushNotif("📢", "Nachricht gesendet!");
     });
-}
-
 }
