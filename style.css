@@ -342,115 +342,351 @@ body{
     opacity:.8;
 }
 
-/* PACKS */
+/* ══════════════════════════════════════════════
+   PACK SEITE
+══════════════════════════════════════════════ */
+
+.packs-page-header{
+    margin-bottom:32px;
+}
+.packs-title{
+    font-size:32px;
+    font-weight:900;
+    margin:0 0 6px;
+}
+.packs-sub{
+    font-size:14px;
+    opacity:.4;
+    margin:0;
+}
 
 .packs-grid{
-
     display:grid;
-
-    grid-template-columns:
-    repeat(auto-fit,minmax(180px,1fr));
-
-    gap:20px;
-
-    margin-top:30px;
+    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    gap:24px;
+    max-width:1100px;
 }
 
-.pack{
+/* PACK KARTE */
 
-    height:220px;
-
-    border-radius:20px;
-
+.pack-card{
+    border-radius:24px;
+    padding:28px 20px 22px;
     display:flex;
-
-    justify-content:center;
-
+    flex-direction:column;
     align-items:center;
-
-    font-size:24px;
-
-    font-weight:bold;
-
+    gap:6px;
     cursor:pointer;
-
-    transition:.3s;
+    position:relative;
+    overflow:hidden;
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+    border:1px solid rgba(255,255,255,.12);
+    text-align:center;
+}
+.pack-card:hover{
+    transform:translateY(-12px) scale(1.03);
+}
+.pack-card:active{
+    transform:translateY(-4px) scale(.98);
 }
 
-.pack:hover{
-
-    transform:
-    translateY(-10px)
-    scale(1.05);
-}
-
-/* PACK COLORS */
-
-.bronze-pack{
-
-    background:
-    linear-gradient(
-        #b07d4f,
-        #6d4324
+.pack-shine{
+    position:absolute;
+    top:-60%; left:-60%;
+    width:220%; height:200%;
+    background:conic-gradient(
+        from 180deg,
+        transparent 60%,
+        rgba(255,255,255,.08) 70%,
+        transparent 80%
     );
+    animation:packSpin 4s linear infinite;
+    pointer-events:none;
+}
+@keyframes packSpin{
+    from{ transform:rotate(0deg); }
+    to{   transform:rotate(360deg); }
 }
 
-.silver-pack{
-
-    background:
-    linear-gradient(
-        #ffffff,
-        #9e9e9e
-    );
-
-    color:black;
+.pack-logo{
+    font-size:48px;
+    margin-bottom:4px;
+    filter:drop-shadow(0 0 16px currentColor);
+}
+.pack-tier{
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:3px;
+    opacity:.7;
+    text-transform:uppercase;
+}
+.pack-name{
+    font-size:18px;
+    font-weight:800;
+    margin:2px 0;
+}
+.pack-contains{
+    font-size:12px;
+    opacity:.5;
+    margin-bottom:4px;
+}
+.pack-price{
+    font-size:15px;
+    font-weight:700;
+    background:rgba(0,0,0,.25);
+    border-radius:8px;
+    padding:5px 14px;
+    margin:4px 0 10px;
+}
+.pack-open-btn{
+    width:100%;
+    padding:11px;
+    border:none;
+    border-radius:12px;
+    background:rgba(255,255,255,.18);
+    color:white;
+    font-weight:800;
+    font-size:14px;
+    cursor:pointer;
+    backdrop-filter:blur(4px);
+    transition:background .2s;
+    pointer-events:none; /* Klick geht an pack-card */
+}
+.pack-card:hover .pack-open-btn{
+    background:rgba(255,255,255,.3);
 }
 
-.gold-pack{
-
-    background:
-    linear-gradient(
-        #ffe082,
-        #d4a100
-    );
-
-    color:black;
+/* Pack-Farben */
+.pack-card.bronze-pack{
+    background:linear-gradient(160deg,#5c3317 0%,#8b5020 50%,#c07a40 100%);
+    box-shadow:0 8px 40px rgba(176,100,50,.35);
+}
+.pack-card.silver-pack{
+    background:linear-gradient(160deg,#3a3a3a 0%,#707070 50%,#c0c0c0 100%);
+    box-shadow:0 8px 40px rgba(160,160,160,.3);
+}
+.pack-card.gold-pack{
+    background:linear-gradient(160deg,#5a3a00 0%,#a07000 50%,#ffd700 100%);
+    box-shadow:0 8px 40px rgba(255,200,0,.4);
+}
+.pack-card.tots-pack{
+    background:linear-gradient(160deg,#1a0033 0%,#6600cc 50%,#ff4dff 100%);
+    box-shadow:0 8px 40px rgba(255,77,255,.5);
+}
+.pack-card.toty-pack{
+    background:linear-gradient(160deg,#000d33 0%,#003399 50%,#00d4ff 100%);
+    box-shadow:0 8px 40px rgba(0,180,255,.55);
 }
 
-.tots-pack{
+/* ══════════════════════════════════════════════
+   PACK ÖFFNEN OVERLAY
+══════════════════════════════════════════════ */
 
-    background:
-    linear-gradient(
-        #5f00ff,
-        #ff4dff
-    );
-
-    box-shadow:
-    0 0 25px #ff4dff;
-}
-
-.toty-pack{
-
-    background:
-    linear-gradient(
-        #001970,
-        #004cff,
-        #00d4ff
-    );
-
-    box-shadow:
-    0 0 30px #00d4ff;
-}
-
-/* PACK RESULT */
-
-#packResult{
-
-    margin-top:50px;
-
+.pack-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.95);
+    z-index:9990;
     display:flex;
-
+    align-items:center;
     justify-content:center;
+    animation:overlayFadeIn .3s ease;
+}
+@keyframes overlayFadeIn{
+    from{ opacity:0; }
+    to{   opacity:1; }
+}
+
+.pack-overlay-box{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+}
+
+.pack-overlay-close{
+    position:absolute;
+    top:24px; right:24px;
+    background:rgba(255,255,255,.1);
+    border:none;
+    color:white;
+    font-size:20px;
+    width:44px; height:44px;
+    border-radius:50%;
+    cursor:pointer;
+    backdrop-filter:blur(4px);
+    transition:.2s;
+    z-index:10;
+}
+.pack-overlay-close:hover{ background:rgba(255,255,255,.2); }
+
+.pack-overlay-stage{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* Phase 1: Das Pack */
+.pack-reveal-pack{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    width:260px;
+    height:360px;
+    border-radius:28px;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+    border:2px solid rgba(255,255,255,.2);
+    animation:packFloat 2s ease-in-out infinite;
+    user-select:none;
+}
+@keyframes packFloat{
+    0%,100%{ transform:translateY(0) rotate(-1deg); }
+    50%{     transform:translateY(-12px) rotate(1deg); }
+}
+
+.pack-reveal-shine{
+    position:absolute;
+    inset:0;
+    background:conic-gradient(
+        from 180deg,
+        transparent 60%,
+        rgba(255,255,255,.15) 70%,
+        transparent 80%
+    );
+    animation:packSpin 2.5s linear infinite;
+}
+.pack-reveal-logo{ font-size:80px; z-index:1; }
+.pack-reveal-tier{
+    font-size:13px;
+    font-weight:900;
+    letter-spacing:4px;
+    opacity:.8;
+    z-index:1;
+    text-transform:uppercase;
+}
+.pack-reveal-tap{
+    font-size:13px;
+    opacity:.55;
+    z-index:1;
+    animation:tapPulse 1.2s ease-in-out infinite;
+}
+@keyframes tapPulse{
+    0%,100%{ opacity:.55; transform:scale(1); }
+    50%{     opacity:1;   transform:scale(1.05); }
+}
+
+/* Pack-Reveal Farben */
+.pack-reveal-bronze{ background:linear-gradient(160deg,#3d1e08,#8b5020,#c07a40); box-shadow:0 0 80px rgba(176,100,50,.5); }
+.pack-reveal-silver{ background:linear-gradient(160deg,#222,#666,#ccc);           box-shadow:0 0 80px rgba(160,160,160,.5); }
+.pack-reveal-gold{   background:linear-gradient(160deg,#2a1800,#a07000,#ffd700);  box-shadow:0 0 80px rgba(255,215,0,.6); }
+.pack-reveal-tots{   background:linear-gradient(160deg,#0d0020,#5500aa,#ff4dff);  box-shadow:0 0 100px rgba(255,77,255,.7); }
+.pack-reveal-toty{   background:linear-gradient(160deg,#000820,#002299,#00d4ff);  box-shadow:0 0 120px rgba(0,212,255,.8); }
+
+/* Pack aufgehen */
+.pack-burst{
+    animation:packBurst .5s ease forwards !important;
+}
+@keyframes packBurst{
+    0%{   transform:scale(1) rotate(0deg); opacity:1; }
+    40%{  transform:scale(1.2) rotate(-5deg); }
+    100%{ transform:scale(0) rotate(20deg); opacity:0; }
+}
+
+/* Pack wackeln */
+.pack-shake{
+    animation:packFloat 2s ease-in-out infinite, packShake .5s ease !important;
+}
+@keyframes packShake{
+    0%,100%{ transform:rotate(0); }
+    20%{ transform:rotate(-6deg) scale(1.04); }
+    40%{ transform:rotate(6deg) scale(1.04); }
+    60%{ transform:rotate(-4deg); }
+    80%{ transform:rotate(4deg); }
+}
+
+/* Phase 2: Karte */
+.pack-reveal-card{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.pack-card-reveal-wrap{
+    display:flex;
+    align-items:center;
+    gap:48px;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+
+.pack-card-flip{
+    animation:cardFlipIn .6s cubic-bezier(.22,1,.36,1);
+}
+@keyframes cardFlipIn{
+    from{ transform:rotateY(90deg) scale(.8); opacity:0; }
+    to{   transform:rotateY(0deg)  scale(1);  opacity:1; }
+}
+
+.pack-rarity-badge{
+    position:absolute;
+    bottom:14px; left:50%;
+    transform:translateX(-50%);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:2px;
+    background:rgba(0,0,0,.4);
+    padding:3px 10px;
+    border-radius:6px;
+    opacity:.8;
+}
+
+.pack-reveal-info{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+    max-width:260px;
+}
+.pack-reveal-congrats{
+    font-size:12px;
+    color:#ffd700;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    opacity:.8;
+}
+.pack-reveal-pname{
+    font-size:28px;
+    font-weight:900;
+    line-height:1.1;
+}
+.pack-reveal-rating{
+    font-size:40px;
+    font-weight:900;
+    line-height:1;
+}
+.pack-reveal-done{
+    margin-top:8px;
+    padding:14px 36px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.05));
+    border:1px solid rgba(255,255,255,.2);
+    color:white;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    backdrop-filter:blur(8px);
+    transition:.2s;
+}
+.pack-reveal-done:hover{
+    background:rgba(255,255,255,.2);
+    transform:scale(1.04);
 }
 
 /* PLAYER CARD */

@@ -2107,103 +2107,115 @@ toty:20000
 
 };
 
-function openPack(type){
+const packMeta = {
+    bronze: { logo:"📦", tier:"BRONZE", color:"#b07d4f", glow:"rgba(176,125,79,.6)"  },
+    silver: { logo:"🥈", tier:"SILBER",  color:"#c0c0c0", glow:"rgba(192,192,192,.6)" },
+    gold:   { logo:"🥇", tier:"GOLD",    color:"#ffd700", glow:"rgba(255,215,0,.7)"   },
+    tots:   { logo:"⭐",  tier:"TOTS",    color:"#ff4dff", glow:"rgba(255,77,255,.7)"  },
+    toty:   { logo:"👑",  tier:"TOTY",    color:"#00d4ff", glow:"rgba(0,212,255,.8)"   },
+};
 
-    const price =
-    packPrices[type];
+let pendingPackType = null;
+let pendingPackPlayer = null;
 
+function selectPack(type){
+    const price = packPrices[type];
     if(coins < price){
-
-        alert(
-        "Nicht genügend Coins!"
-        );
-
+        alert("Nicht genügend Coins! Du brauchst " + price.toLocaleString("de-DE") + " 🪙");
         return;
     }
 
-    coins -= price;
-
-    updateCurrency();
-
-    const pool =
-    players.filter(
-    p => p.rarity === type &&
-    !club.some(c => c.name === p.name)
-    );
-
+    const pool = players.filter(p =>
+        p.rarity === type && !club.some(c => c.name === p.name));
     if(pool.length === 0){
-
-        coins += price;
-
-        updateCurrency();
-
-        alert(
-        "Du besitzt bereits alle " +
-        type.toUpperCase() +
-        " Spieler!"
-        );
-
+        alert("Du besitzt bereits alle " + type.toUpperCase() + " Spieler!");
         return;
     }
 
-    const player =
-    pool[
-    Math.floor(
-    Math.random() *
-    pool.length
-    )
-    ];
+    // Coins abziehen, Spieler auswählen (aber noch nicht vergeben)
+    coins -= price;
+    updateCurrency();
+    pendingPackType   = type;
+    pendingPackPlayer = pool[Math.floor(Math.random() * pool.length)];
 
-    club.push(player);
+    // Overlay öffnen
+    const meta = packMeta[type];
+    document.getElementById("packRevealLogo").textContent = meta.logo;
+    document.getElementById("packRevealTier").textContent = meta.tier;
 
-    saveData("club", JSON.stringify(club));
+    const revealPack = document.getElementById("packRevealPack");
+    revealPack.className = "pack-reveal-pack pack-reveal-" + type;
+    revealPack.style.display = "flex";
+    revealPack.classList.remove("pack-shake");
 
-    const po = parseInt(loadData("packsOpened")||0)+1;
-    saveData("packsOpened", po);
-    questProgress("open_pack");
-    checkAllAchievements();
+    document.getElementById("packRevealCard").style.display = "none";
+    document.getElementById("packOpenOverlay").style.display = "flex";
 
-    addXP(50);
+    // Pack wackeln lassen
+    setTimeout(() => revealPack.classList.add("pack-shake"), 100);
+}
 
-    // TOTY Effekt
+function openPack(type){
+    // Aufgerufen wenn man auf das Pack im Overlay tippt
+    if(!pendingPackPlayer) return;
+    const player = pendingPackPlayer;
+    const meta   = packMeta[pendingPackType];
 
-    if(type === "toty"){
+    // Pack ausblenden
+    const packEl = document.getElementById("packRevealPack");
+    packEl.classList.add("pack-burst");
 
-        document.body.style.transition =
-        ".3s";
+    setTimeout(() => {
+        packEl.style.display = "none";
 
-        document.body.style.boxShadow =
-        "inset 0 0 200px #00d4ff";
+        // Karte einblenden
+        const cardEl = document.getElementById("packRevealCard");
+        cardEl.style.display = "flex";
+        cardEl.innerHTML = `
+        <div class="pack-card-reveal-wrap">
+            <div class="player-card ${player.rarity} ${player.img?"has-img":""} pack-card-flip">
+                <div class="player-rating">${player.rating}</div>
+                ${playerImg(player)}
+                <div class="player-name">${player.name}</div>
+                <div class="pack-rarity-badge">${player.rarity.toUpperCase()}</div>
+            </div>
+            <div class="pack-reveal-info">
+                <div class="pack-reveal-congrats">Neuer Spieler!</div>
+                <div class="pack-reveal-pname">${player.name}</div>
+                <div class="pack-reveal-rating" style="color:${meta.color}">
+                    ★ ${player.rating}
+                </div>
+                <button class="pack-reveal-done" onclick="closePackOverlay()">
+                    Weiter
+                </button>
+            </div>
+        </div>`;
 
-        setTimeout(()=>{
+        // Glow-Effekt für seltene Packs
+        if(pendingPackType === "toty" || pendingPackType === "tots"){
+            document.getElementById("packOpenOverlay").style.background =
+                `radial-gradient(ellipse at center, ${meta.glow} 0%, rgba(0,0,0,.95) 70%)`;
+        }
 
-            document.body.style.boxShadow =
-            "none";
+        // Daten speichern
+        club.push(player);
+        saveData("club", JSON.stringify(club));
+        const po = parseInt(loadData("packsOpened")||0)+1;
+        saveData("packsOpened", po);
+        questProgress("open_pack");
+        checkAllAchievements();
+        addXP(50);
+        pendingPackPlayer = null;
+        pendingPackType   = null;
+    }, 600);
+}
 
-        },1500);
-    }
-
-    document
-    .getElementById(
-    "packResult"
-    )
-    .innerHTML = `
-
-    <div class="player-card ${player.rarity} ${player.img ? 'has-img' : ''}">
-
-        <div class="player-rating">
-            ${player.rating}
-        </div>
-
-        ${playerImg(player)}
-
-        <div class="player-name">
-            ${player.name}
-        </div>
-
-    </div>
-
-    `;
+function closePackOverlay(e){
+    if(e && e.target !== document.getElementById("packOpenOverlay")) return;
+    document.getElementById("packOpenOverlay").style.display = "none";
+    document.getElementById("packOpenOverlay").style.background = "";
+    pendingPackPlayer = null;
+    pendingPackType   = null;
 }
 
 // ======================

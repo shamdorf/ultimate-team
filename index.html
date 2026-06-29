@@ -549,48 +549,84 @@
     </div>
 
     <!-- PACKS -->
+    <div id="packs" class="page">
 
-    <div id="packs"
-    class="page">
-
-        <h1>Packs</h1>
+        <div class="packs-page-header">
+            <h1 class="packs-title">Packs</h1>
+            <p class="packs-sub">Wähle ein Pack und enthülle deinen Spieler</p>
+        </div>
 
         <div class="packs-grid">
 
-            <div class="pack bronze-pack"
-            onclick="openPack('bronze')">
-                Bronze Pack<br>
-                <span style="font-size:16px;opacity:.8">1.000 🪙</span>
+            <div class="pack-card bronze-pack" onclick="selectPack('bronze')">
+                <div class="pack-shine"></div>
+                <div class="pack-logo">📦</div>
+                <div class="pack-tier">BRONZE</div>
+                <div class="pack-name">Starter Pack</div>
+                <div class="pack-contains">1 Bronze Spieler</div>
+                <div class="pack-price">1.000 🪙</div>
+                <button class="pack-open-btn">Öffnen</button>
             </div>
 
-            <div class="pack silver-pack"
-            onclick="openPack('silver')">
-                Silber Pack<br>
-                <span style="font-size:16px;opacity:.7">2.500 🪙</span>
+            <div class="pack-card silver-pack" onclick="selectPack('silver')">
+                <div class="pack-shine"></div>
+                <div class="pack-logo">🥈</div>
+                <div class="pack-tier">SILBER</div>
+                <div class="pack-name">Silver Pack</div>
+                <div class="pack-contains">1 Silber Spieler</div>
+                <div class="pack-price">2.500 🪙</div>
+                <button class="pack-open-btn">Öffnen</button>
             </div>
 
-            <div class="pack gold-pack"
-            onclick="openPack('gold')">
-                Gold Pack<br>
-                <span style="font-size:16px;opacity:.7">5.000 🪙</span>
+            <div class="pack-card gold-pack" onclick="selectPack('gold')">
+                <div class="pack-shine"></div>
+                <div class="pack-logo">🥇</div>
+                <div class="pack-tier">GOLD</div>
+                <div class="pack-name">Gold Pack</div>
+                <div class="pack-contains">1 Gold Spieler</div>
+                <div class="pack-price">5.000 🪙</div>
+                <button class="pack-open-btn">Öffnen</button>
             </div>
 
-            <div class="pack tots-pack"
-            onclick="openPack('tots')">
-                TOTS Pack<br>
-                <span style="font-size:16px;opacity:.8">10.000 🪙</span>
+            <div class="pack-card tots-pack" onclick="selectPack('tots')">
+                <div class="pack-shine"></div>
+                <div class="pack-logo">⭐</div>
+                <div class="pack-tier">TOTS</div>
+                <div class="pack-name">TOTS Pack</div>
+                <div class="pack-contains">1 TOTS Spieler</div>
+                <div class="pack-price">10.000 🪙</div>
+                <button class="pack-open-btn">Öffnen</button>
             </div>
 
-            <div class="pack toty-pack"
-            onclick="openPack('toty')">
-                TOTY Pack<br>
-                <span style="font-size:16px;opacity:.8">20.000 🪙</span>
+            <div class="pack-card toty-pack" onclick="selectPack('toty')">
+                <div class="pack-shine"></div>
+                <div class="pack-logo">👑</div>
+                <div class="pack-tier">TOTY</div>
+                <div class="pack-name">TOTY Pack</div>
+                <div class="pack-contains">1 TOTY Spieler</div>
+                <div class="pack-price">20.000 🪙</div>
+                <button class="pack-open-btn">Öffnen</button>
             </div>
 
         </div>
+    </div>
 
-        <div id="packResult"></div>
-
+    <!-- PACK ÖFFNEN OVERLAY -->
+    <div id="packOpenOverlay" class="pack-overlay" style="display:none" onclick="closePackOverlay(event)">
+        <div class="pack-overlay-box">
+            <div class="pack-overlay-stage" id="packStage">
+                <!-- Phase 1: Pack -->
+                <div class="pack-reveal-pack" id="packRevealPack" onclick="openPack(pendingPackType)">
+                    <div class="pack-reveal-shine"></div>
+                    <div class="pack-reveal-logo" id="packRevealLogo">📦</div>
+                    <div class="pack-reveal-tier" id="packRevealTier">BRONZE</div>
+                    <div class="pack-reveal-tap">Tippen zum Öffnen ✨</div>
+                </div>
+                <!-- Phase 2: Karte -->
+                <div class="pack-reveal-card" id="packRevealCard" style="display:none"></div>
+            </div>
+            <button class="pack-overlay-close" onclick="closePackOverlay()">✕</button>
+        </div>
     </div>
 
     <!-- CLUB -->
