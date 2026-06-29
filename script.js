@@ -452,12 +452,8 @@ function claimStreak(){
     if(reward.coins){ coins += reward.coins; saveData("coins", coins); }
     if(reward.gems){ gems += reward.gems; saveData("gems", gems); }
     if(reward.pack){
-        const pool = players.filter(p => p.rarity === reward.pack);
-        if(pool.length){
-            const p = pool[Math.floor(Math.random()*pool.length)];
-            club.push(p);
-            saveData("club", JSON.stringify(club));
-        }
+        const pool = players.filter(p => p.rarity === reward.pack && !club.some(c => c.name === p.name));
+        if(pool.length) addToClub(pool[Math.floor(Math.random()*pool.length)]);
     }
     updateCurrency();
     pushNotif("📅","Login-Streak Tag " + data.current + ": " + reward.label + " erhalten!");
@@ -612,9 +608,7 @@ function claimQuest(id){
             !club.some(c => c.name === p.name));
         if(pool.length > 0){
             const p = pool[Math.floor(Math.random()*pool.length)];
-            club.push(p);
-            saveData("club", JSON.stringify(club));
-            pushNotif("📦", "Quest-Pack geöffnet: " + p.name + " (" + p.rating + ")");
+            if(addToClub(p)) pushNotif("📦", "Quest-Pack geöffnet: " + p.name + " (" + p.rating + ")");
         }
     }
 
@@ -853,8 +847,7 @@ function claimDailyPacks(){
         Math.floor(Math.random() * pool.length)]);
     }
 
-    drawn.forEach(p => club.push(p));
-    saveData("club", JSON.stringify(club));
+    drawn.forEach(p => addToClub(p));
     saveData("vip_lastclaim", today);
     addXP(300);
     loadShop("fix");
@@ -1191,6 +1184,9 @@ function buyFromMarket(fbKey){
         if(listing.sellerEmail === currentUser.email){
             alert("Du kannst deinen eigenen Spieler nicht kaufen!"); return;
         }
+        if(club.some(c => c.name === listing.player.name)){
+            alert(listing.player.name + " ist bereits in deinem Verein!"); return;
+        }
         if(coins < listing.price){ alert("Nicht genügend Coins!"); return; }
 
         coins -= listing.price;
@@ -1200,8 +1196,7 @@ function buyFromMarket(fbKey){
         db.ref("accounts/" + encodeEmail(listing.sellerEmail) + "/coins")
           .transaction(c => (c || 0) + listing.price);
 
-        club.push(listing.player);
-        saveData("club", JSON.stringify(club));
+        addToClub(listing.player);
 
         db.ref("marketplace/" + fbKey).remove();
         updateCurrency();
@@ -2093,6 +2088,17 @@ function playerImg(player){
     return `<img class="card-img" src="${player.img}" alt="${player.name}">`;
 }
 
+// Zentrale Funktion: Spieler zum Verein hinzufügen – verhindert Duplikate
+function addToClub(player){
+    if(club.some(c => c.name === player.name)){
+        pushNotif("⚠️", player.name + " ist bereits in deinem Verein!");
+        return false;
+    }
+    club.push(player);
+    saveData("club", JSON.stringify(club));
+    return true;
+}
+
 // Deterministischer Hash für konsistente Stats/Position
 function strHash(str){
     let h = 0;
@@ -2260,8 +2266,7 @@ function openPack(type){
         }
 
         // Daten speichern
-        club.push(player);
-        saveData("club", JSON.stringify(club));
+        addToClub(player);
         const po = parseInt(loadData("packsOpened")||0)+1;
         saveData("packsOpened", po);
         questProgress("open_pack");
@@ -2549,36 +2554,20 @@ function loadMarketplace(container){
 }
 
 function buyPlayer(name){
-
-const player =
-players.find(
-p => p.name === name
-);
-
-if(!player) return;
-
-if(coins < player.price){
-
-alert(
-"Nicht genügend Coins!"
-);
-
-return;
-}
-
-coins -= player.price;
-
-club.push(player);
-
-saveData("club", JSON.stringify(club));
-
-updateCurrency();
-
-alert(
-player.name +
-" gekauft!"
-);
-
+    const player = players.find(p => p.name === name);
+    if(!player) return;
+    if(club.some(c => c.name === player.name)){
+        alert(player.name + " ist bereits in deinem Verein!");
+        return;
+    }
+    if(coins < player.price){
+        alert("Nicht genügend Coins!");
+        return;
+    }
+    coins -= player.price;
+    addToClub(player);
+    updateCurrency();
+    alert(player.name + " gekauft!");
 }
 
 // ======================
