@@ -21,6 +21,12 @@ function storageKey(key){
 
 function saveData(key, val){
     localStorage.setItem(storageKey(key), val);
+    // Wichtige Felder sofort in Firebase sichern
+    const important = ["coins","gems","club","team","coinLevel","xp","passLevel","vip","wins","streak"];
+    if(important.includes(key)){
+        clearTimeout(window._syncTimer);
+        window._syncTimer = setTimeout(syncUserStats, 3000);
+    }
 }
 
 function loadData(key){
@@ -162,6 +168,10 @@ async function login(){
         }
         currentUser = { email, name: acc.name };
         localStorage.setItem("ut_session", JSON.stringify(currentUser));
+
+        // Spielstand aus Firebase in localStorage laden
+        restoreFromFirebase(email, acc);
+
         errorEl.textContent = "";
         initGame();
     } catch(e){
@@ -237,14 +247,40 @@ function logout(){
     location.reload();
 }
 
+// Alle Spielstände von Firebase in localStorage schreiben
+function restoreFromFirebase(email, acc){
+    const set = (key, val) => {
+        if(val !== undefined && val !== null)
+            localStorage.setItem(email + "_" + key, val);
+    };
+    set("coins",      acc.coins      ?? 100000);
+    set("gems",       acc.gems       ?? 0);
+    set("wins",       acc.wins       ?? 0);
+    set("coinLevel",  acc.coinLevel  ?? 1);
+    set("xp",         acc.xp         ?? 0);
+    set("passLevel",  acc.passLevel  ?? 1);
+    if(acc.club)  localStorage.setItem(email + "_club",  acc.club);
+    if(acc.team)  localStorage.setItem(email + "_team",  acc.team);
+    if(acc.vip)   localStorage.setItem(email + "_vip",   acc.vip);
+    if(acc.streak)localStorage.setItem(email + "_streak",acc.streak);
+}
+
+// Alle Spielstände von localStorage nach Firebase sichern
 function syncUserStats(){
     if(!currentUser) return;
     db.ref("accounts/" + encodeEmail(currentUser.email)).update({
         coins,
         gems,
-        wins: parseInt(loadData("wins") || 0),
-        clubSize: club.length,
-        name: currentUser.name
+        wins:      parseInt(loadData("wins")      || 0),
+        coinLevel: parseInt(loadData("coinLevel") || 1),
+        xp:        parseInt(loadData("xp")        || 0),
+        passLevel: parseInt(loadData("passLevel") || 1),
+        clubSize:  club.length,
+        club:      JSON.stringify(club),
+        team:      JSON.stringify(team),
+        vip:       loadData("vip") || "0",
+        streak:    loadData("streak") || "",
+        name:      currentUser.name
     });
 }
 
